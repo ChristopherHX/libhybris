@@ -57,7 +57,7 @@ static int my_alphasort(struct bionic_dirent **a,
     return strcoll((*a)->d_name, (*b)->d_name);
 }
 
-#ifndef __APPLE__
+#if !defined(__APPLE__) && !defined(_WIN32)
 static int my_versionsort(struct bionic_dirent **a,
                           struct bionic_dirent **b)
 {
@@ -132,14 +132,9 @@ static int my_scandir(const char *dir,
 struct _hook dirent_hooks[] = {
     /* dirent.h */
     {"opendir", opendir},
-    {"fdopendir", fdopendir},
     {"closedir", closedir},
     {"readdir", my_readdir},
-    {"rewinddir", rewinddir},
-    {"seekdir", seekdir},
-    {"telldir", telldir},
-    {"dirfd", dirfd},
-#ifndef __APPLE__
+#if !defined(__APPLE__) && !defined(_WIN32)
     {"scandir", my_scandir},
     {"scandirat", my_scandirat},
     {"versionsort", my_versionsort},

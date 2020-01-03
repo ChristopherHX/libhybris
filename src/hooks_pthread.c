@@ -1146,21 +1146,6 @@ struct _hook pthread_hooks[] = {
 #ifndef __APPLE__
     {"pthread_getattr_np", my_pthread_getattr_np},
 #endif
-    {"pthread_rwlockattr_init", my_pthread_rwlockattr_init},
-    {"pthread_rwlockattr_destroy", my_pthread_rwlockattr_destroy},
-    {"pthread_rwlockattr_setpshared", my_pthread_rwlockattr_setpshared},
-    {"pthread_rwlockattr_getpshared", my_pthread_rwlockattr_getpshared},
-    {"pthread_rwlock_init", my_pthread_rwlock_init},
-    {"pthread_rwlock_destroy", my_pthread_rwlock_destroy},
-    {"pthread_rwlock_unlock", my_pthread_rwlock_unlock},
-    {"pthread_rwlock_wrlock", my_pthread_rwlock_wrlock},
-    {"pthread_rwlock_rdlock", my_pthread_rwlock_rdlock},
-    {"pthread_rwlock_tryrdlock", my_pthread_rwlock_tryrdlock},
-    {"pthread_rwlock_trywrlock", my_pthread_rwlock_trywrlock},
-#ifndef __APPLE__
-    {"pthread_rwlock_timedrdlock", my_pthread_rwlock_timedrdlock},
-    {"pthread_rwlock_timedwrlock", my_pthread_rwlock_timedwrlock},
-#endif
     {"__pthread_cleanup_push", my_pthread_cleanup_push},
     {"__pthread_cleanup_pop", my_pthread_cleanup_pop},
     /* semaphore.h */

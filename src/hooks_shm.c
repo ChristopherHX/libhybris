@@ -94,7 +94,7 @@ static void _sync_mmap_with_shm()
             /* Note that mremap may change the address pointed by _hybris_shm_data.
              * But as we never point directly into _hybris_shm_data, it's fine.
              * */
-#ifdef __APPLE__
+#if !defined(__APPLE__) && !defined(_WIN32)
             // TODO: Implement it somehow?
             abort();
 #else

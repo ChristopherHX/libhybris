@@ -14,19 +14,6 @@
 #include "../include/hybris/hook.h"
 #include "../include/hybris/binding.h"
 
-struct open_redirect {
-    const char *from;
-    const char *to;
-};
-
-struct open_redirect open_redirects[] = {
-        { "/dev/log/main", "/dev/log_main" },
-        { "/dev/log/radio", "/dev/log_radio" },
-        { "/dev/log/system", "/dev/log_system" },
-        { "/dev/log/events", "/dev/log_events" },
-        { NULL, NULL }
-};
-
 #ifdef __APPLE__
 
 int darwin_convert_fd_flags_to_native(int flags)
@@ -54,18 +41,6 @@ int my_open(const char *pathname, int flags, ...)
 {
     va_list ap;
     mode_t mode = 0;
-    const char *target_path = pathname;
-
-    if (pathname != NULL) {
-        struct open_redirect *entry = &open_redirects[0];
-        while (entry->from != NULL) {
-            if (strcmp(pathname, entry->from) == 0) {
-                target_path = entry->to;
-                break;
-            }
-            entry++;
-        }
-    }
 
 #ifdef __APPLE__
     flags = darwin_convert_fd_flags_to_native(flags);
@@ -77,7 +52,7 @@ int my_open(const char *pathname, int flags, ...)
         va_end(ap);
     }
 
-    return open(target_path, flags, mode);
+    return open(pathname, flags, mode);
 }
 
 

@@ -22,7 +22,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#if defined(DEBUG)
 #include <pthread.h>
+#endif
 #include <time.h>
 
 FILE *hybris_logging_target = NULL;
@@ -83,7 +85,9 @@ hybris_logging_initialize()
                _hybris_should_trace = 1;
         }
     }
+#if defined(DEBUG)
     pthread_mutex_init(&hybris_logging_mutex, NULL);
+#endif
 }
 
 int

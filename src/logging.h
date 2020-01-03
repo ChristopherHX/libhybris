@@ -22,7 +22,9 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <unistd.h>
+#if defined(DEBUG)
 #include <pthread.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -76,7 +78,9 @@ enum hybris_log_format hybris_logging_format();
 
 int hybris_should_trace(const char *module, const char *tracepoint);
 
+#if defined(DEBUG)
 extern pthread_mutex_t hybris_logging_mutex;
+#endif
 
 #ifdef __cplusplus
 }

@@ -1059,7 +1059,6 @@ struct _hook pthread_hooks[] = {
     /* pthread.h */
     // {"getauxval", getauxval},
     {"gettid", my_gettid},
-    {"pthread_atfork", pthread_atfork},
     {"pthread_create", my_pthread_create},
     {"pthread_kill", pthread_kill},
     {"pthread_exit", pthread_exit},
@@ -1143,9 +1142,6 @@ struct _hook pthread_hooks[] = {
     {"pthread_attr_getguardsize", my_pthread_attr_getguardsize},
     {"pthread_attr_setscope", my_pthread_attr_setscope},
     {"pthread_attr_getscope", my_pthread_attr_getscope},
-#ifndef __APPLE__
-    {"pthread_getattr_np", my_pthread_getattr_np},
-#endif
     {"__pthread_cleanup_push", my_pthread_cleanup_push},
     {"__pthread_cleanup_pop", my_pthread_cleanup_pop},
     /* semaphore.h */

@@ -22,8 +22,6 @@
 #define PROPERTIES_H_
 
 #include <stdint.h>
-#include <unistd.h>
-#include <stdint.h>
 
 /* Based on Android */
 #define PROP_SERVICE_NAME "property_service"

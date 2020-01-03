@@ -51,38 +51,6 @@ static struct bionic_dirent *my_readdir(DIR *dirp)
     return &result;
 }
 
-static int my_readdir_r(DIR *dir, struct bionic_dirent *entry,
-                        struct bionic_dirent **result)
-{
-    struct dirent entry_r;
-    struct dirent *result_r;
-
-    int res = readdir_r(dir, &entry_r, &result_r);
-
-    if (res == 0) {
-        if (result_r != NULL) {
-            *result = entry;
-
-            entry->d_ino = entry_r.d_ino;
-#ifndef __APPLE__
-            entry->d_off = entry_r.d_off;
-#endif
-            entry->d_reclen = entry_r.d_reclen;
-            entry->d_type = entry_r.d_type;
-            memcpy(entry->d_name, entry_r.d_name, sizeof(entry->d_name));
-
-            // Make sure the string is zero-terminated, even if cut off (which
-            // shouldn't happen, as both bionic and glibc have d_name defined
-            // as fixed array of 256 chars)
-            entry->d_name[sizeof(entry->d_name) - 1] = '\0';
-        } else {
-            *result = NULL;
-        }
-    }
-
-    return res;
-}
-
 static int my_alphasort(struct bionic_dirent **a,
                         struct bionic_dirent **b)
 {
@@ -167,7 +135,6 @@ struct _hook dirent_hooks[] = {
     {"fdopendir", fdopendir},
     {"closedir", closedir},
     {"readdir", my_readdir},
-    {"readdir_r", my_readdir_r},
     {"rewinddir", rewinddir},
     {"seekdir", seekdir},
     {"telldir", telldir},

@@ -627,7 +627,7 @@ struct _hook main_hooks[] = {
 #else
     {"fdatasync", fdatasync},
 #endif
-    {"swab", swab},
+    // {"swab", swab},
     /* time.h */
     {"clock", clock},
     {"time", time},

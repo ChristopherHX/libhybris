@@ -1125,8 +1125,8 @@ struct _hook pthread_hooks[] = {
     {"pthread_attr_destroy", my_pthread_attr_destroy},
     {"pthread_attr_setdetachstate", my_pthread_attr_setdetachstate},
     {"pthread_attr_getdetachstate", my_pthread_attr_getdetachstate},
-    {"pthread_attr_setschedpolicy", my_pthread_attr_setschedpolicy},
-    {"pthread_attr_getschedpolicy", my_pthread_attr_getschedpolicy},
+    // {"pthread_attr_setschedpolicy", my_pthread_attr_setschedpolicy},
+    // {"pthread_attr_getschedpolicy", my_pthread_attr_getschedpolicy},
 #ifdef __APPLE__
     {"pthread_attr_setschedparam", darwin_my_pthread_attr_setschedparam},
     {"pthread_attr_getschedparam", darwin_my_pthread_attr_getschedparam},

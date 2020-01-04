@@ -445,6 +445,12 @@ struct tm *localtime_r(const time_t *timep, struct tm *result) {
     localtime_s(result, timep);
     return result;
 }
+#define bcmp memcmp
+#define bcpy memmove
+void bzero (void *__s, size_t __n) {
+    memset(__s, __n);
+}
+
 #endif
 
 struct _hook main_hooks[] = {
@@ -467,14 +473,14 @@ struct _hook main_hooks[] = {
     {"ioctl", darwin_my_ioctl},
     {"memalign", darwin_my_memalign},
 #else
-    {"getrlimit", getrlimit},
+    // {"getrlimit", getrlimit},
     {"ioctl", ioctl},
     {"memalign", memalign},
 #endif
     {"gettimeofday", gettimeofday},
     {"utime", utime},
     {"setlocale", setlocale},
-    {"localeconv", localeconv},
+    // {"localeconv", localeconv},
 #ifdef USE_BIONIC_SETJMP
     {"setjmp", bionic_setjmp},
     {"longjmp", bionic_longjmp},
@@ -539,7 +545,7 @@ struct _hook main_hooks[] = {
     {"setenv", setenv},
     {"unsetenv", unsetenv},
     // {"clearenv", clearenv},
-    {"mkstemp", mkstemp},
+    // {"mkstemp", mkstemp},
     // {"mkstemp64", mkstemp64},
     // {"mkstemps", mkstemps},
     // {"mkstemps64", mkstemps64},
@@ -550,7 +556,7 @@ struct _hook main_hooks[] = {
     // {"mkostemps64", mkostemps64},
     {"system", system},
     // {"canonicalize_file_name", canonicalize_file_name},
-    {"realpath", realpath},
+    // {"realpath", realpath},
     {"bsearch", bsearch},
     {"qsort", qsort},
     {"abs", abs},
@@ -582,14 +588,14 @@ struct _hook main_hooks[] = {
     // {"getpt", getpt},
     // {"getloadavg", getloadavg},
     /* string.h */
-    {"memccpy",memccpy},
+    // {"memccpy",memccpy},
     {"memchr",memchr},
     // {"memrchr",memrchr},
     {"memcmp",memcmp},
     {"memcpy",my_memcpy},
     {"memmove",memmove},
     {"memset",memset},
-    {"memmem",memmem},
+    // {"memmem",memmem},
     // {"memswap",memswap},
     {"strchr",strchr},
     {"strrchr",strrchr},
@@ -626,8 +632,13 @@ struct _hook main_hooks[] = {
     // {"ffs",ffs},
     // {"index",index},
     // {"rindex",rindex},
+#if defined(_WIN32)
     {"strcasecmp",_stricmp},
     {"strncasecmp",_strnicmp},
+#else
+    {"strcasecmp", strcasecmp},
+    {"strncasecmp",strncasecmp},
+#endif
     /* errno.h */
 #ifdef __APPLE__
     {"__errno", darwin_my_errno},
@@ -648,10 +659,10 @@ struct _hook main_hooks[] = {
     {"scanf", scanf},
     {"vscanf", vscanf},
     {"vsscanf", vsscanf},
-    {"openlog", openlog},
-    {"syslog", syslog},
-    {"closelog", closelog},
-    {"vsyslog", vsyslog},
+    // {"openlog", openlog},
+    // {"syslog", syslog},
+    // {"closelog", closelog},
+    // {"vsyslog", vsyslog},
     // {"timer_create", timer_create},
     // {"timer_settime", timer_settime},
     // {"timer_gettime", timer_gettime},
@@ -677,14 +688,14 @@ struct _hook main_hooks[] = {
     {"pipe", pipe},
     // {"pipe2", pipe2},
     // {"alarm", alarm},
-    {"sleep", sleep},
+    // {"sleep", sleep},
     {"usleep", usleep},
     // {"pause", pause},
     // {"chown", chown},
     // {"fchown", fchown},
     // {"lchown", lchown},
     {"chdir", chdir},
-    {"fchdir", fchdir},
+    // {"fchdir", fchdir},
     {"getcwd", getcwd},
     // {"get_current_dir_name", get_current_dir_name},
     {"dup", dup},
@@ -733,9 +744,9 @@ struct _hook main_hooks[] = {
     {"isatty", isatty},
     // {"ttyslot", ttyslot},
     // {"link", link},
-    {"symlink", symlink},
-    {"readlink", readlink},
-    {"unlink", unlink},
+    // {"symlink", symlink},
+    // {"readlink", readlink},
+    // {"unlink", unlink},
     {"rmdir", rmdir},
     // {"tcgetpgrp", tcgetpgrp},
     // {"getlogin", getlogin},
@@ -755,9 +766,9 @@ struct _hook main_hooks[] = {
     // {"getpass", getpass},
     {"fsync", fsync},
     // {"syncfs", syncfs},
-    {"gethostid", gethostid},
+    // {"gethostid", gethostid},
     {"sync", sync},
-    {"getpagesize", getpagesize},
+    // {"getpagesize", getpagesize},
     // {"getdtablesize", getdtablesize},
     {"truncate", truncate},
     // {"truncate64", truncate64},
@@ -790,13 +801,13 @@ struct _hook main_hooks[] = {
     // {"__tzname", __tzname},
     // {"__daylight", &__daylight},
     // {"__timezone", &__timezone},
-    {"tzname", tzname},
+    // {"tzname", tzname},
     {"tzset", tzset},
-    {"daylight", &daylight},
-    {"timezone", &timezone},
+    // {"daylight", &daylight},
+    // {"timezone", &timezone},
     // {"stime", stime},
-    {"timegm", timegm},
-    {"timelocal", timelocal},
+    // {"timegm", timegm},
+    // {"timelocal", timelocal},
     // {"dysize", dysize},
     {"nanosleep", nanosleep},
     // {"clock_getres", clock_getres},
@@ -805,7 +816,7 @@ struct _hook main_hooks[] = {
 #else
     {"clock_gettime", clock_gettime},
 #endif
-    {"clock_settime", clock_settime},
+    // {"clock_settime", clock_settime},
     // {"clock_nanosleep", clock_nanosleep},
     // {"clock_getcpuclockid", clock_getcpuclockid},
     /* mman.h */

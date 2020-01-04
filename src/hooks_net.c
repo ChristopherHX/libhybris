@@ -114,8 +114,8 @@ struct _hook net_hooks[] = {
 #endif
     {"gethostbyaddr", gethostbyaddr},
     {"gethostbyname", gethostbyname},
-    {"gethostbyname2", gethostbyname2},
-    {"gethostent", gethostent},
+    // {"gethostbyname2", gethostbyname2},
+    // {"gethostent", gethostent},
     {"gai_strerror", gai_strerror},
     /* socket.h */
 #ifndef __APPLE__
@@ -128,7 +128,7 @@ struct _hook net_hooks[] = {
     {"getsockopt", getsockopt},
     {"setsockopt", setsockopt},
 #endif
-    {"socketpair", socketpair},
+    // {"socketpair", socketpair},
     {"getpeername", getpeername},
     {"send", send},
     {"recv", recv},

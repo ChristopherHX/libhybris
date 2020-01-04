@@ -20,6 +20,7 @@
 
 #ifdef _WIN32
 #include <windows/dlfcn.h>
+#include <windows/pthread.h>
 #else
 #include <pthread.h>
 #include <dlfcn.h>

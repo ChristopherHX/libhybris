@@ -25,7 +25,11 @@
 #include <unistd.h>
 #endif
 #if defined(DEBUG)
+#ifdef _WIN32
+#include <windows/pthread.h>
+#else
 #include <pthread.h>
+#endif
 #endif
 
 #ifdef __cplusplus

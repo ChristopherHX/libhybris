@@ -23,13 +23,19 @@
 #include <string.h>
 #include <stdio.h>
 #if defined(DEBUG)
+#ifdef _WIN32
+#include <windows/pthread.h>
+#else
 #include <pthread.h>
+#endif
 #endif
 #include <time.h>
 
 FILE *hybris_logging_target = NULL;
 
+#if defined(DEBUG)
 pthread_mutex_t hybris_logging_mutex;
+#endif
 
 static enum hybris_log_level
 hybris_minimum_log_level = HYBRIS_LOG_WARN;
@@ -111,18 +117,26 @@ hybris_set_log_level(enum hybris_log_level level)
 void *
 hybris_get_thread_id()
 {
+#ifdef _WIN32
+    return (void *)__threadid();
+#else
     return (void *)pthread_self();
+#endif
 }
 
 double
 hybris_get_thread_time()
 {
+#ifndef _WIN32
     struct timespec now;
     if(clock_gettime(CLOCK_THREAD_CPUTIME_ID, &now) == 0) {
 	return (double)now.tv_sec + (double)now.tv_nsec / 1000000000.0;
     } else {
+#endif
 	return -1.0;
+#ifndef _WIN32
     }    
+#endif
 }
 
 int

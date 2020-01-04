@@ -42,7 +42,9 @@
 #include <time.h>
 #include <windows/dlfcn.h>
 #include <windows/dirent.h>
+#include <windows/pthread.h>
 #include <netioapi.h>
+#include <windows/semaphore.h>
 typedef _locale_t locale_t;
 #include <io.h>
 #include <direct.h>
@@ -346,7 +348,9 @@ int uname(struct utsname* name) {
     strcpy_s(name->version, 65, "Vista");
     strcpy_s(name->machine, 65, "PC");
 }
-extern void sched_yield();
+void sched_yield() {
+    SwitchToThread();
+}
 int getrlimit() {
     return 0;
 }
@@ -364,14 +368,6 @@ int posix_memalign(void **memptr, size_t alignment, size_t size) {
 }
 void * memalign(size_t _Alignment, size_t _Size) {
     return _aligned_malloc(_Size, _Alignment);
-}
-
-int gettimeofday() {
-    return 0;
-}
-
-int utime() {
-    return 0;
 }
 
 int stub() {
@@ -401,7 +397,7 @@ int stub() {
 #define epoll_ctl stub
 #define epoll_wait stub
 #define if_freenameindex stub
-#define if_freenameindex stub
+#define madvise stub
 #define if_freenameindex stub
 
 #define valloc malloc
@@ -412,30 +408,8 @@ int pipe(int* _PtHandles, int flags) {
     return _pipe(_PtHandles, 1024, flags);
 }
 
-void fsync(FILE* file) {
-    FlushFileBuffers(_get_osfhandle(fileno(file)));
-}
-#define sync flushall
+#define sync _flushall
 
-int truncate(const char *path, off_t length) {
-    HANDLE handle = CreateFileA(path, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-    DWORD oldpos = SetFilePointer(handle, 0, NULL, FILE_CURRENT);
-    SetFilePointer(handle, length, NULL, FILE_BEGIN);
-    BOOL ret = SetEndOfFile(handle);
-    SetFilePointer(handle, oldpos, NULL, FILE_BEGIN);
-    return !ret;
-}
-int ftruncate(int fd, off_t length) {
-    HANDLE handle = _get_osfhandle(fd);
-    DWORD oldpos = SetFilePointer(handle, 0, NULL, FILE_CURRENT);
-    SetFilePointer(handle, length, NULL, FILE_BEGIN);
-    BOOL ret = SetEndOfFile(handle);
-    SetFilePointer(handle, oldpos, NULL, FILE_BEGIN);
-    return !ret;
-}
-
-extern size_t readlink(const char *pathname, char *buf, size_t bufsiz);
-extern int symlink(const char *target, const char *linkpath);
 extern char *realpath(const char *path, char *resolved_path);
 struct tm *gmtime_r(const time_t *timep, struct tm *result) {
     gmtime_s(result, timep);
@@ -446,9 +420,9 @@ struct tm *localtime_r(const time_t *timep, struct tm *result) {
     return result;
 }
 #define bcmp memcmp
-#define bcpy memmove
+#define bcopy memmove
 void bzero (void *__s, size_t __n) {
-    memset(__s, __n);
+    ZeroMemory(__s, __n);
 }
 
 #endif

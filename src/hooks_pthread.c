@@ -1,14 +1,19 @@
+#ifdef _WIN32
+#include <windows/pthread.h>
+#include <windows/semaphore.h>
+#else
 #include <pthread.h>
+#include <semaphore.h>
+#endif
 #include <stdlib.h>
 #include <errno.h>
 #include <signal.h>
-#include <semaphore.h>
 #ifdef __APPLE__
 #include <mach/mach_init.h>
 #include <mach/task.h>
 #include <mach/semaphore.h>
 #include "hooks_darwin_pthread_once.h"
-#else
+#elif !defined(_WIN32)
 #include <sys/syscall.h>
 #include <sys/auxv.h>
 #endif
@@ -865,6 +870,8 @@ static pid_t my_gettid( void )
 {
 #ifdef __APPLE__
     return (pid_t) (void*) pthread_self();
+#elif _WIN32
+    return (pid_t)GetCurrentThreadId();
 #else
     return syscall( __NR_gettid );
 #endif

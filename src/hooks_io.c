@@ -2,12 +2,19 @@
 #include <stdarg.h>
 #include <string.h>
 #include <sys/stat.h>
+
+#ifdef _WIN32
+#include <windows/msvc.h>
+#include <windows/poll.h>
+#include <time.h>
+#else
 #include <sys/poll.h>
 #include <sys/select.h>
+#endif
 #include <fcntl.h>
 #include <wchar.h>
 #include <stdio.h>
-#ifndef __APPLE__
+#if !defined(__APPLE__) && !defined(_WIN32)
 #include <stdio_ext.h>
 #endif
 
@@ -91,9 +98,9 @@ void stat_to_bionic_stat(struct stat *s, struct bionic_stat64 *b) {
     b->st_mtim = s->st_mtimespec;
     b->st_ctim = s->st_ctimespec;
 #else
-    b->st_atim = s->st_atim;
-    b->st_mtim = s->st_mtim;
-    b->st_ctim = s->st_ctim;
+    b->st_atim.tv_sec = s->st_atime;
+    b->st_mtim.tv_sec = s->st_mtime;
+    b->st_ctim.tv_sec = s->st_ctime;
 #endif
     b->st_ino = s->st_ino;
 }

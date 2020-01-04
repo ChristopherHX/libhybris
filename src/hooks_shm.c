@@ -29,7 +29,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
-#ifndef _WIN32
+#ifdef _WIN32
+#include <windows/pthread.h>
+#else
 #include <pthread.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
@@ -42,7 +44,11 @@
 
 #define HYBRIS_DATA_SIZE    4000
 #define HYBRIS_SHM_MASK     0xFF000000UL
+#ifdef _WIN32
 #define HYBRIS_SHM_PATH     "/hybris_shm_data"
+#else
+#define HYBRIS_SHM_PATH     "/hybris_shm_data"
+#endif
 
 /* Structure of a shared memory region */
 typedef struct _hybris_shm_data_t {
@@ -119,27 +125,61 @@ static void _hybris_shm_init()
     if (_hybris_shm_fd < 0) {
         const size_t size_to_map = HYBRIS_SHM_DATA_HEADER_SIZE + HYBRIS_DATA_SIZE; /* 4000 bytes for the data, plus the header size */
 
+#ifdef _WIN32
         /* initialize or get shared memory segment */
+        HANDLE hMapFile = OpenFileMappingA(
+                   FILE_MAP_ALL_ACCESS,   // read/write access
+                   FALSE,                 // do not inherit the name
+                   HYBRIS_SHM_PATH);               // name of mapping object
+        _hybris_shm_fd = hMapFile != 0 ? _open_osfhandle(hMapFile, O_RDWR) : -1;
+#else
         _hybris_shm_fd = shm_open(HYBRIS_SHM_PATH, O_RDWR, 0660);
+#endif
         if (_hybris_shm_fd >= 0) {
             /* Map the memory object */
+#ifdef _WIN32
+            _hybris_shm_data = (LPTSTR) MapViewOfFile(hMapFile, // handle to map object
+               FILE_MAP_ALL_ACCESS,  // read/write permission
+               0,
+               0,
+               size_to_map);
+#else
             _hybris_shm_data = (hybris_shm_data_t *)mmap( NULL, size_to_map,
                                              PROT_READ | PROT_WRITE, MAP_SHARED,
                                              _hybris_shm_fd, 0 );
+#endif
             _current_mapped_size = size_to_map;
 
             _sync_mmap_with_shm();
         }
         else {
             LOGD("Creating a new shared memory segment.");
-
+#ifdef _WIN32
+            hMapFile = CreateFileMapping(
+                 INVALID_HANDLE_VALUE,    // use paging file
+                 NULL,                    // default security
+                 PAGE_READWRITE,          // read/write access
+                 0,                       // maximum object size (high-order DWORD)
+                 size_to_map,                // maximum object size (low-order DWORD)
+                 HYBRIS_SHM_PATH);                 // name of mapping object
+            _hybris_shm_fd = hMapFile != 0 ? _open_osfhandle(hMapFile, O_RDWR) : -1;
+#else
             _hybris_shm_fd = shm_open(HYBRIS_SHM_PATH, O_RDWR | O_CREAT, 0660);
+#endif
             if (_hybris_shm_fd >= 0) {
+#ifdef _WIN32
+                _hybris_shm_data = (LPTSTR) MapViewOfFile(hMapFile,   // handle to map object
+                        FILE_MAP_ALL_ACCESS, // read/write permission
+                        0,
+                        0,
+                        size_to_map);
+#else
                 ftruncate( _hybris_shm_fd, size_to_map );
                 /* Map the memory object */
                 _hybris_shm_data = (hybris_shm_data_t *)mmap( NULL, size_to_map,
                                              PROT_READ | PROT_WRITE, MAP_SHARED,
                                              _hybris_shm_fd, 0 );
+#endif
                 if (_hybris_shm_data == MAP_FAILED) {
                     HYBRIS_ERROR_LOG(HOOKS, "ERROR: mmap failed: %s\n", strerror(errno));
                     _release_shm();

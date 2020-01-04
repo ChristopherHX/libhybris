@@ -3,7 +3,6 @@
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 #include <windows.h>
-typedef size_t socklen_t;
 #else
 #include <sys/socket.h>
 #include <netdb.h>
@@ -108,6 +107,15 @@ int my_getnameinfo (const struct sockaddr *__restrict sa,
                     socklen_t servlen, int flags) {
     int glibc_flags = convert_getnameinfo_flags(flags);
     return getnameinfo(sa, salen, host, hostlen, serv, servlen, glibc_flags);
+}
+#endif
+
+#ifdef _WIN32
+size_t sendmsg(int socket, const struct msghdr *message, int flags) {
+    return -1;
+}
+size_t recvmsg(int sockfd, struct msghdr *msg, int flags) {
+    return -1;
 }
 #endif
 

@@ -40,11 +40,13 @@ static struct bionic_dirent *my_readdir(DIR *dirp)
         return NULL;
     }
 
+#ifndef _WIN32
     result.d_ino = real_result->d_ino;
 #ifndef __APPLE__
     result.d_off = real_result->d_off;
 #endif
     result.d_reclen = real_result->d_reclen;
+#endif
     result.d_type = real_result->d_type;
     memcpy(result.d_name, real_result->d_name, sizeof(result.d_name));
 

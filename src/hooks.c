@@ -36,8 +36,16 @@
 #include <stdarg.h>
 
 #ifdef _WIN32
+#include <WinSock2.h>
+#include <WS2tcpip.h>
+#include <windows.h>
+#include <time.h>
 #include <windows/dlfcn.h>
 #include <windows/dirent.h>
+#include <netioapi.h>
+typedef _locale_t locale_t;
+#include <io.h>
+#include <direct.h>
 #else
 #include <dlfcn.h>
 #include <dirent.h>
@@ -107,11 +115,11 @@ static int locale_inited = 0;
 
 uintptr_t _hybris_stack_chk_guard = 0;
 
-#ifndef __APPLE__
-static void __attribute__((constructor)) __init_stack_check_guard() {
-    _hybris_stack_chk_guard = *((uintptr_t*) getauxval(AT_RANDOM));
-}
-#endif
+// #ifndef __APPLE__
+// static void __attribute__((constructor)) __init_stack_check_guard() {
+//     _hybris_stack_chk_guard = *((uintptr_t*) getauxval(AT_RANDOM));
+// }
+// #endif
 
 
 /*
@@ -249,10 +257,18 @@ FP_ATTRIB static double my_strtod(const char *nptr, char **endptr)
 {
 	if (locale_inited == 0)
 	{
+#ifdef _WIN32
+        hybris_locale = _create_locale(LC_ALL, "C");
+#else
 		hybris_locale = newlocale(LC_ALL_MASK, "C", 0);
+#endif
 		locale_inited = 1;
 	}
+#ifdef _WIN32
+	return _strtod_l(nptr, endptr, hybris_locale);
+#else
 	return strtod_l(nptr, endptr, hybris_locale);
+#endif
 }
 
 extern int __cxa_atexit(void (*)(void*), void*, void*);
@@ -311,6 +327,125 @@ static void my_assert(const char* file, int line, const char* msg) {
 extern void bionic_setjmp();
 extern void bionic_longjmp();
 
+#ifdef _WIN32
+struct utsname {
+    char sysname[65];    /* Operating system name (e.g., "Linux") */
+    char nodename[65];   /* Name within "some implementation-defined
+                            network" */
+    char release[65];    /* Operating system release (e.g., "2.6.28") */
+    char version[65];    /* Operating system version */
+    char machine[65];    /* Hardware identifier */
+#ifdef _GNU_SOURCE
+    char domainname[65]; /* NIS or YP domain name */
+#endif
+};
+int uname(struct utsname* name) {
+    strcpy_s(name->sysname, 65, "Windows");
+    strcpy_s(name->nodename, 65, "local");
+    strcpy_s(name->release, 65, "Vista");
+    strcpy_s(name->version, 65, "Vista");
+    strcpy_s(name->machine, 65, "PC");
+}
+extern void sched_yield();
+int getrlimit() {
+    return 0;
+}
+int ioctl() {
+    return 0;
+}
+int posix_memalign(void **memptr, size_t alignment, size_t size) {
+    if(memptr) {
+        if(*memptr = _aligned_malloc(size, alignment)) {
+            return 0;
+        }
+        return ENOMEM;
+    }
+    return EINVAL;
+}
+void * memalign(size_t _Alignment, size_t _Size) {
+    return _aligned_malloc(_Size, _Alignment);
+}
+
+int gettimeofday() {
+    return 0;
+}
+
+int utime() {
+    return 0;
+}
+
+int stub() {
+    return 0;
+}
+
+#define random stub
+#define srandom stub
+#define initstate stub
+#define setstate stub
+#define drand48 stub
+#define erand48 stub
+#define lrand48 stub
+#define nrand48 stub
+#define mrand48 stub
+#define jrand48 stub
+#define srand48 stub
+#define lcong48 stub
+#define seed48 stub
+#define prctl stub
+#define getrusage stub
+#define if_nameindex stub
+#define if_freenameindex stub
+#define sigaction stub
+#define sigprocmask stub
+#define epoll_create stub
+#define epoll_ctl stub
+#define epoll_wait stub
+#define if_freenameindex stub
+#define if_freenameindex stub
+#define if_freenameindex stub
+
+#define valloc malloc
+#define strtoq strtol
+#define strtouq strtoul
+
+int pipe(int* _PtHandles, int flags) {
+    return _pipe(_PtHandles, 1024, flags);
+}
+
+void fsync(FILE* file) {
+    FlushFileBuffers(_get_osfhandle(fileno(file)));
+}
+#define sync flushall
+
+int truncate(const char *path, off_t length) {
+    HANDLE handle = CreateFileA(path, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    DWORD oldpos = SetFilePointer(handle, 0, NULL, FILE_CURRENT);
+    SetFilePointer(handle, length, NULL, FILE_BEGIN);
+    BOOL ret = SetEndOfFile(handle);
+    SetFilePointer(handle, oldpos, NULL, FILE_BEGIN);
+    return !ret;
+}
+int ftruncate(int fd, off_t length) {
+    HANDLE handle = _get_osfhandle(fd);
+    DWORD oldpos = SetFilePointer(handle, 0, NULL, FILE_CURRENT);
+    SetFilePointer(handle, length, NULL, FILE_BEGIN);
+    BOOL ret = SetEndOfFile(handle);
+    SetFilePointer(handle, oldpos, NULL, FILE_BEGIN);
+    return !ret;
+}
+
+extern size_t readlink(const char *pathname, char *buf, size_t bufsiz);
+extern int symlink(const char *target, const char *linkpath);
+extern char *realpath(const char *path, char *resolved_path);
+struct tm *gmtime_r(const time_t *timep, struct tm *result) {
+    gmtime_s(result, timep);
+    return result;
+}
+struct tm *localtime_r(const time_t *timep, struct tm *result) {
+    localtime_s(result, timep);
+    return result;
+}
+#endif
 
 struct _hook main_hooks[] = {
     {"property_get", property_get },
@@ -491,11 +626,13 @@ struct _hook main_hooks[] = {
     // {"ffs",ffs},
     // {"index",index},
     // {"rindex",rindex},
-    {"strcasecmp",strcasecmp},
-    {"strncasecmp",strncasecmp},
+    {"strcasecmp",_stricmp},
+    {"strncasecmp",_strnicmp},
     /* errno.h */
 #ifdef __APPLE__
     {"__errno", darwin_my_errno},
+#elif defined(_WIN32)
+    {"__errno", _errno},
 #else
     {"__errno", __errno_location},
 #endif

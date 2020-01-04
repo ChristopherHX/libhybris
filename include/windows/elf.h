@@ -19,10 +19,9 @@
 #ifndef _ELF_H
 #define	_ELF_H 1
 
-#include <features.h>
-
-__BEGIN_DECLS
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 /* Standard ELF types.  */
 
 #include <stdint.h>
@@ -1146,7 +1145,7 @@ typedef struct
     } a_un;
 } Elf64_auxv_t;
 
-#include <bits/auxv.h>
+// #include <bits/auxv.h>
 /* Note section contents.  Each entry in the note section begins with
    a header of a fixed form.  */
 
@@ -3922,6 +3921,8 @@ enum
 #define R_NDS32_TLS_TPOFF	102
 #define R_NDS32_TLS_DESC	119
 
-__END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif	/* elf.h */

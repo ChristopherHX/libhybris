@@ -29,9 +29,15 @@
 #ifndef _LINKER_H_
 #define _LINKER_H_
 
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 #include <sys/types.h>
+#ifdef _WIN32
+#include <windows/elf.h>
+#else
 #include <elf.h>
+#endif
 
 #undef PAGE_MASK
 #undef PAGE_SIZE

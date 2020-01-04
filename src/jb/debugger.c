@@ -28,17 +28,20 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <ctype.h>
 #include <signal.h>
+#include <errno.h>
+#include "linker.h"
+
+#ifndef _WIN32
+#include <unistd.h>
 #include <sys/mman.h>
 #include <sys/prctl.h>
-#include <errno.h>
 
-#include "linker.h"
 
 #include <sys/socket.h>
 #include <sys/un.h>
+#endif
 
 extern int tgkill(int tgid, int tid, int sig);
 

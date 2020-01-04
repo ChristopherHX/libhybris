@@ -26,7 +26,7 @@ if (${IS_ARM_BUILD})
         target_compile_definitions(hybris PRIVATE AVOID_FLOAT_POINT_HOOKS)
     endif()
 else()
-    target_compile_definitions(hybris PRIVATE ANDROID_X86_LINKER _GNU_SOURCE LINKER_TEXT_BASE=0xB0000100 LINKER_AREA_SIZE=0x01000000 LINKER_DEBUG=1)
+    target_compile_definitions(hybris PRIVATE ANDROID_X86_LINKER _GNU_SOURCE LINKER_TEXT_BASE=0xB0000100 LINKER_AREA_SIZE=0x01000000 LINKER_DEBUG=0)
 endif()
 
 if(APPLE)

@@ -19,13 +19,12 @@
 #ifndef	_DLFCN_H
 #define	_DLFCN_H 1
 
-#include <features.h>
 #define __need_size_t
 #include <stddef.h>
 
 /* Collect various system dependent definitions and declarations.  */
-#include <bits/dlfcn.h>
-
+// #include <bits/dlfcn.h>
+#define __USE_GNU
 
 #ifdef __USE_GNU
 /* If the first argument of `dlsym' or `dlvsym' is set to RTLD_NEXT
@@ -49,38 +48,9 @@ typedef long int Lmid_t;
 #endif
 
 
-__BEGIN_DECLS
-
-/* Open the shared object FILE and map it in; return a handle that can be
-   passed to `dlsym' to get symbol values from it.  */
-extern void *dlopen (const char *__file, int __mode) __THROWNL;
-
-/* Unmap and close a shared object opened by `dlopen'.
-   The handle cannot be used again after calling `dlclose'.  */
-extern int dlclose (void *__handle) __THROWNL __nonnull ((1));
-
-/* Find the run-time address in the shared object HANDLE refers to
-   of the symbol called NAME.  */
-extern void *dlsym (void *__restrict __handle,
-		    const char *__restrict __name) __THROW __nonnull ((2));
-
-#ifdef __USE_GNU
-/* Like `dlopen', but request object to be allocated in a new namespace.  */
-extern void *dlmopen (Lmid_t __nsid, const char *__file, int __mode) __THROWNL;
-
-/* Find the run-time address in the shared object HANDLE refers to
-   of the symbol called NAME with VERSION.  */
-extern void *dlvsym (void *__restrict __handle,
-		     const char *__restrict __name,
-		     const char *__restrict __version)
-     __THROW __nonnull ((2, 3));
+#ifdef __cplusplus
+extern "C" {
 #endif
-
-/* When any of the above functions fails, call this function
-   to return a string describing the error.  Each call resets
-   the error string so that a following call returns null.  */
-extern char *dlerror (void) __THROW;
-
 
 #ifdef __USE_GNU
 /* Structure containing information about object searched using
@@ -93,15 +63,6 @@ typedef struct
   void *dli_saddr;		/* Exact value of nearest symbol.  */
 } Dl_info;
 
-/* Fill in *INFO with the following information about ADDRESS.
-   Returns 0 iff no shared object's segments contain that address.  */
-extern int dladdr (const void *__address, Dl_info *__info)
-     __THROW __nonnull ((2));
-
-/* Same as `dladdr', but additionally sets *EXTRA_INFO according to FLAGS.  */
-extern int dladdr1 (const void *__address, Dl_info *__info,
-		    void **__extra_info, int __flags) __THROW __nonnull ((2));
-
 /* These are the possible values for the FLAGS argument to `dladdr1'.
    This indicates what extra information is stored at *EXTRA_INFO.
    It may also be zero, in which case the EXTRA_INFO argument is not used.  */
@@ -113,16 +74,6 @@ enum
     /* The object containing the address (struct link_map *).  */
     RTLD_DL_LINKMAP = 2
   };
-
-
-/* Get information about the shared object HANDLE refers to.
-   REQUEST is from among the values below, and determines the use of ARG.
-
-   On success, returns zero.  On failure, returns -1 and records an error
-   message to be fetched with `dlerror'.  */
-extern int dlinfo (void *__restrict __handle,
-		   int __request, void *__restrict __arg)
-     __THROW __nonnull ((1, 3));
 
 /* These are the possible values for the REQUEST argument to `dlinfo'.  */
 enum
@@ -185,6 +136,8 @@ typedef struct
 #endif /* __USE_GNU */
 
 
-__END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif	/* dlfcn.h */

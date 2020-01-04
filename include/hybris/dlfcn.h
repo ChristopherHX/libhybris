@@ -18,7 +18,11 @@
 #ifndef _HYBRIS_DLFCN_H_
 #define _HYBRIS_DLFCN_H_
 
+#ifdef _WIN32
+#include <windows/dlfcn.h>
+#else
 #include <dlfcn.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {

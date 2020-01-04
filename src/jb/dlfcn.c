@@ -18,8 +18,12 @@
 #define _GNU_SOURCE
 #endif
 
-#include <dlfcn.h>
+#ifdef _WIN32
+#include <windows/dlfcn.h>
+#else
 #include <pthread.h>
+#include <dlfcn.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 

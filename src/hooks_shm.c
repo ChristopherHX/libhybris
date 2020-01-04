@@ -28,11 +28,13 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <pthread.h>
 #include <errno.h>
+#ifndef _WIN32
+#include <pthread.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/mman.h>
+#endif
 
 /* Debug */
 #include "logging.h"

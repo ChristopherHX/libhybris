@@ -1,6 +1,13 @@
 #include <stdlib.h>
+#ifdef _WIN32
+#include <WinSock2.h>
+#include <WS2tcpip.h>
+#include <windows.h>
+typedef size_t socklen_t;
+#else
 #include <sys/socket.h>
 #include <netdb.h>
+#endif
 #include "hooks_net.h"
 
 #include "../include/hybris/hook.h"

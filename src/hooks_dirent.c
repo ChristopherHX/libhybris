@@ -1,6 +1,10 @@
 #include <stdlib.h>
 #include <stdint.h>
+#ifdef _WIN32
+#include <windows/dirent.h>
+#else
 #include <dirent.h>
+#endif
 #include <string.h>
 #include <fcntl.h>
 

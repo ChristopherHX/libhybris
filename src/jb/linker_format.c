@@ -29,9 +29,13 @@
 #include <stdarg.h>
 #include <string.h>
 #include <errno.h>
-#include <unistd.h>
 #include <stdint.h>
 #include <stddef.h>
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
 #include "linker_format.h"
 #include "linker_debug.h"
 

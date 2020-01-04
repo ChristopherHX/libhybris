@@ -21,7 +21,9 @@
 
 #include <stdio.h>
 #include <sys/types.h>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 #if defined(DEBUG)
 #include <pthread.h>
 #endif

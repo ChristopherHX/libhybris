@@ -30,48 +30,57 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
-#include <dlfcn.h>
-#include <pthread.h>
-#include <sys/xattr.h>
-#include <grp.h>
 #include <signal.h>
 #include <errno.h>
-#include <dirent.h>
 #include <sys/types.h>
-#include <sys/uio.h>
 #include <stdarg.h>
+
+#ifdef _WIN32
+#include <windows/dlfcn.h>
+#include <windows/dirent.h>
+#else
+#include <dlfcn.h>
+#include <dirent.h>
+#include <sys/uio.h>
 #include <semaphore.h>
 #include <sys/resource.h>
-
 #include <sys/ipc.h>
 #include <sys/shm.h>
-#include <fcntl.h>
-
 #include <netdb.h>
 #include <unistd.h>
 #include <syslog.h>
+#include <strings.h>
+#include <pthread.h>
+#include <sys/xattr.h>
+#include <grp.h>
+#endif
+
+#include <fcntl.h>
 #include <locale.h>
 #ifndef __APPLE__
+#ifndef _WIN32
 #include <sys/syscall.h>
 #include <sys/auxv.h>
 #include <sys/prctl.h>
+#endif
 #include <malloc.h>
 #endif
 
+#ifndef _WIN32
 #include <arpa/inet.h>
-#include <assert.h>
 #include <sys/mman.h>
-#include <wchar.h>
 #include <sys/utsname.h>
-#include <math.h>
 #include <sys/resource.h>
-#include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/ioctl.h>
 #include <sys/epoll.h>
 #include <net/if.h>
 #include <utime.h>
+#endif
+#include <assert.h>
+#include <wchar.h>
+#include <math.h>
+#include <sys/stat.h>
 #include <wctype.h>
 #include <ctype.h>
 #include <setjmp.h>

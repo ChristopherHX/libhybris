@@ -33,15 +33,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <dlfcn.h>
 #include <sys/stat.h>
 
+#ifdef _WIN32
+#include <windows/dlfcn.h>
+#else
+#include <dlfcn.h>
+#include <unistd.h>
 #include <pthread.h>
 
 #include <sys/mman.h>
+#endif
 
 /* special private C library header - see Android.mk */
 //#include "bionic_tls.h"

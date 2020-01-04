@@ -1,4 +1,5 @@
-#include "../../git-compat-util.h"
+#include "msvc.h"
+#include "dirent.h"
 
 struct DIR {
 	struct dirent dd_dir; /* includes d_type */

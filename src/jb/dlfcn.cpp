@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+extern "C" {
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
 
 #ifdef _WIN32
+#include <windows/elf.h>
 #include <windows/dlfcn.h>
 #include <windows/pthread.h>
 #else
@@ -61,7 +62,12 @@ static const char *dl_errors[] = {
 #ifdef __APPLE__
 static pthread_mutex_t dl_lock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER;
 #else
-static pthread_mutex_t dl_lock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+static pthread_mutex_t dl_lock
+#ifdef _WIN32
+;
+#else
+ = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+#endif
 #endif
 
 static void set_dlerror(int err)
@@ -312,3 +318,5 @@ soinfo libdl_info = {
     bucket: libdl_buckets,
     chain: libdl_chains,
 };
+
+}

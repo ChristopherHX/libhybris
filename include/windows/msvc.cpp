@@ -968,16 +968,16 @@ int link(const char *oldpath, const char *newpath)
 	return code.value();
 }
 
-int uname(struct utsname *buf)
-{
-	unsigned v = (unsigned)GetVersion();
-	memset(buf, 0, sizeof(*buf));
-	strcpy(buf->sysname, "Windows");
-	snprintf(buf->release, sizeof(buf->release), "%u.%u", v & 0xff, (v >> 8) & 0xff);
-	/* assuming NT variants only.. */
-	snprintf(buf->version, sizeof(buf->version), "%u", (v >> 16) & 0x7fff);
-	return 0;
-}
+// int uname(struct utsname *buf)
+// {
+// 	unsigned v = (unsigned)GetVersion();
+// 	memset(buf, 0, sizeof(*buf));
+// 	strcpy(buf->sysname, "Windows");
+// 	snprintf(buf->release, sizeof(buf->release), "%u.%u", v & 0xff, (v >> 8) & 0xff);
+// 	/* assuming NT variants only.. */
+// 	snprintf(buf->version, sizeof(buf->version), "%u", (v >> 16) & 0x7fff);
+// 	return 0;
+// }
 
 int fsync(int fd)
 {

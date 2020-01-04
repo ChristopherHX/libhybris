@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-#ifndef __APPLE__
+#if !defined(__APPLE__) && !defined(_WIN32)
 #include <linux/auxvec.h>
 #endif
 
@@ -1682,6 +1682,7 @@ static void call_destructors(soinfo *si)
    /dev/null. */
 static int nullify_closed_stdio (void)
 {
+    #ifndef _WIN32
     int dev_null, i, status;
     int return_value = 0;
 
@@ -1747,6 +1748,9 @@ static int nullify_closed_stdio (void)
 
     close(dev_null);
     return return_value;
+#else
+    return 0;
+#endif
 }
 
 static int link_image(soinfo *si, unsigned wr_offset)
@@ -2138,6 +2142,7 @@ static unsigned __linker_init_post_relocation(unsigned **elfdata)
     /* Initialize environment functions, and get to the ELF aux vectors table */
     vecs = linker_env_init(vecs);
 
+#ifndef _WIN32
     /* Check auxv for AT_SECURE first to see if program is setuid, setgid,
        has file caps, or caused a SELinux/AppArmor domain transition. */
     for (v = vecs; v[0]; v += 2) {
@@ -2150,6 +2155,7 @@ static unsigned __linker_init_post_relocation(unsigned **elfdata)
 
     /* Kernel did not provide AT_SECURE - fall back on legacy test. */
     program_is_setuid = (getuid() != geteuid()) || (getgid() != getegid());
+#endif
 
 sanitize:
     /* Sanitize environment if we're loading a setuid program */
@@ -2206,6 +2212,7 @@ sanitize:
     linker_soinfo.base = 0;     // This is the important part; must be zero.
     insert_soinfo_into_debug_map(&linker_soinfo);
 
+#ifndef _WIN32
         /* extract information passed from the kernel */
     while(vecs[0] != 0){
         switch(vecs[0]){
@@ -2221,6 +2228,7 @@ sanitize:
         }
         vecs += 2;
     }
+#endif
 
     /* Compute the value of si->base. We can't rely on the fact that
      * the first entry is the PHDR because this will not be true
@@ -2312,6 +2320,7 @@ sanitize:
  * location of the linker.
  */
 static unsigned find_linker_base(unsigned **elfdata) {
+#ifndef _WIN32
     int argc = (int) *elfdata;
     char **argv = (char**) (elfdata + 1);
     unsigned *vecs = (unsigned*) (argv + argc + 1);
@@ -2328,6 +2337,7 @@ static unsigned find_linker_base(unsigned **elfdata) {
         }
         vecs += 2;
     }
+#endif
 
     return 0; // should never happen
 }

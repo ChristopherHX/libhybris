@@ -7,6 +7,12 @@
 #include <windows/msvc.h>
 #include <windows/poll.h>
 #include <time.h>
+#include <stdio.h>
+#include <stdarg.h>
+#define stat64 _stat64
+typedef unsigned short mode_t;
+typedef short nlink_t;
+typedef short gid_t;
 #else
 #include <sys/poll.h>
 #include <sys/select.h>
@@ -91,16 +97,22 @@ void stat_to_bionic_stat(struct stat *s, struct bionic_stat64 *b) {
     b->st_gid = s->st_gid;
     b->st_rdev = s->st_rdev;
     b->st_size = s->st_size;
+#ifndef _WIN32
     b->st_blksize = (unsigned long) s->st_blksize;
     b->st_blocks = (unsigned long long) s->st_blocks;
+#endif
 #ifdef __APPLE__
     b->st_atim = s->st_atimespec;
     b->st_mtim = s->st_mtimespec;
     b->st_ctim = s->st_ctimespec;
-#else
+#elif defined (_WIN32)
     b->st_atim.tv_sec = s->st_atime;
     b->st_mtim.tv_sec = s->st_mtime;
     b->st_ctim.tv_sec = s->st_ctime;
+#else
+    b->st_atim = s->st_atim;
+    b->st_mtim = s->st_mtim;
+    b->st_ctim = s->st_ctim;
 #endif
     b->st_ino = s->st_ino;
 }
@@ -108,18 +120,28 @@ void stat_to_bionic_stat(struct stat *s, struct bionic_stat64 *b) {
 #ifndef __APPLE__
 void stat64_to_bionic_stat(struct stat64 *s, struct bionic_stat64 *b) {
     b->st_dev = s->st_dev;
+#ifdef _WIN32
+    b->__st_ino = s->st_ino;
+#else
     b->__st_ino = s->__st_ino;
+#endif
     b->st_mode = s->st_mode;
     b->st_nlink = s->st_nlink;
     b->st_uid = s->st_uid;
     b->st_gid = s->st_gid;
     b->st_rdev = s->st_rdev;
     b->st_size = s->st_size;
+#ifdef _WIN32
+    b->st_atim.tv_sec = s->st_atime;
+    b->st_mtim.tv_sec = s->st_mtime;
+    b->st_ctim.tv_sec = s->st_ctime;
+#else
     b->st_blksize = (unsigned long) s->st_blksize;
     b->st_blocks = (unsigned long long) s->st_blocks;
     b->st_atim = s->st_atim;
     b->st_mtim = s->st_mtim;
     b->st_ctim = s->st_ctim;
+#endif
     b->st_ino = s->st_ino;
 }
 #endif
@@ -152,7 +174,11 @@ int my_stat64(const char* path, struct bionic_stat64 *s)
 int my_fstat64(int fd, struct bionic_stat64 *s)
 {
     struct stat64 tmp;
+#ifdef _WIN32
+    int ret = _fstat64(fd, &tmp);
+#else
     int ret = fstat64(fd, &tmp);
+#endif
     stat64_to_bionic_stat(&tmp, s);
     return ret;
 }
@@ -339,7 +365,7 @@ static int my_fputs(const char *s, struct aFILE* fp)
 static size_t my_fread(void *ptr, size_t size, size_t nmemb, struct aFILE* fp)
 {
     size_t ret = fread(ptr, size, nmemb, _get_actual_fp(fp));
-    fp->_flags = (short) (feof_unlocked(_get_actual_fp(fp)) ? 0x0020 : 0);
+    fp->_flags = (short) (feof(_get_actual_fp(fp)) ? 0x0020 : 0);
     return ret;
 }
 
@@ -395,12 +421,12 @@ static int my_getc(struct aFILE* fp)
     return getc(_get_actual_fp(fp));
 }
 
-static ssize_t my_getdelim(char ** lineptr, size_t *n, int delimiter, struct aFILE* fp)
-{
-    return getdelim(lineptr, n, delimiter, _get_actual_fp(fp));
-}
+// static ssize_t my_getdelim(char ** lineptr, size_t *n, int delimiter, struct aFILE* fp)
+// {
+//     return getdelim(lineptr, n, delimiter, _get_actual_fp(fp));
+// }
 
-static ssize_t my_getline(char **lineptr, size_t *n, struct aFILE* fp)
+static int my_getline(char **lineptr, size_t *n, struct aFILE* fp)
 {
     return getline(lineptr, n, _get_actual_fp(fp));
 }
@@ -451,32 +477,6 @@ static int my_fileno(struct aFILE* fp)
 static int my_pclose(struct aFILE* fp)
 {
     return pclose(_get_actual_fp(fp));
-}
-
-static void my_flockfile(struct aFILE* fp)
-{
-    return flockfile(_get_actual_fp(fp));
-}
-
-static int my_ftrylockfile(struct aFILE* fp)
-{
-    return ftrylockfile(_get_actual_fp(fp));
-}
-
-static void my_funlockfile(struct aFILE* fp)
-{
-    return funlockfile(_get_actual_fp(fp));
-}
-
-
-static int my_getc_unlocked(struct aFILE* fp)
-{
-    return getc_unlocked(_get_actual_fp(fp));
-}
-
-static int my_putc_unlocked(int c, struct aFILE* fp)
-{
-    return putc_unlocked(c, _get_actual_fp(fp));
 }
 
 /* exists only on the BSD platform
@@ -533,6 +533,38 @@ static wint_t my_putwc(wchar_t c, struct aFILE* fp)
 {
     return putwc(c, _get_actual_fp(fp));
 }
+
+#ifdef _WIN32
+
+int vasprintf(char **strp, const char *fmt, va_list ap) {
+    // _vscprintf tells you how big the buffer needs to be
+    int len = _vscprintf(fmt, ap);
+    if (len == -1) {
+        return -1;
+    }
+    size_t size = (size_t)len + 1;
+    char *str = malloc(size);
+    if (!str) {
+        return -1;
+    }
+    // _vsprintf_s is the "secure" version of vsprintf
+    int r = _vsprintf_s(str, len + 1, fmt, ap);
+    if (r == -1) {
+        free(str);
+        return -1;
+    }
+    *strp = str;
+    return r;
+}
+
+int asprintf(char **strp, const char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    int r = vasprintf(strp, fmt, ap);
+    va_end(ap);
+    return r;
+}
+#endif
 
 #ifdef __APPLE__
 
@@ -599,7 +631,7 @@ struct _hook io_hooks[] = {
     {"__sF", &my_sF},
     {"fopen", my_fopen},
     {"fdopen", my_fdopen},
-    {"popen", popen},
+    {"popen", _popen},
     {"puts", puts},
     {"vprintf", vprintf},
     {"sprintf", sprintf},

@@ -35,9 +35,6 @@ typedef int pthread_condattr_t;
 typedef int pthread_attr_t;
 typedef int pthread_rwlockattr_t;
 typedef int pthread_rwlock_t;
-#define pthread_mutexattr_init(a) (*(a) = 0)
-#define pthread_mutexattr_destroy(a) return_0(0)
-#define pthread_mutexattr_settype(a, t) 0
 #define PTHREAD_MUTEX_RECURSIVE 0
 
 #define pthread_cond_t CONDITION_VARIABLE
@@ -68,7 +65,9 @@ extern int pthread_create(pthread_t *thread, const void *unused,
 
 extern int pthread_join(pthread_t thread, void **value_ptr);
 
-#define pthread_equal(t1, t2) ((t1).tid == (t2).tid)
+int pthread_equal(pthread_t t1, pthread_t t2) {
+	return ((t1)->tid == (t2)->tid);
+}
 extern pthread_t pthread_self(void);
 
 static void pthread_exit(void *ret)
@@ -77,7 +76,10 @@ static void pthread_exit(void *ret)
 }
 
 int pthread_kill(pthread_t thread, int sig) {
-	TerminateThread(thread->tid, sig);
+	HANDLE threadh = OpenThread(THREAD_TERMINATE, FALSE, thread->tid);
+	TerminateThread(threadh, sig);
+	CloseHandle(threadh);
+	return 0;
 }
 
 typedef DWORD pthread_key_t;
@@ -116,6 +118,7 @@ BOOL CALLBACK pthread_onceInternal(PINIT_ONCE InitOnce, PVOID Parameter, PVOID *
 typedef volatile int pthread_once_t;
 int pthread_once(pthread_once_t  *once_control, void (*init_routine)(void)) {
     InitOnceExecuteOnce((PINIT_ONCE) once_control, pthread_onceInternal, init_routine, NULL);
+	return 0;
 }
 
 //  
@@ -154,6 +157,12 @@ int pthread_setname_np(pthread_t thid, const char *thname) {
 	return 0;
 }
 
+int pthread_mutexattr_getpshared(const pthread_mutexattr_t *restrict attr, int *restrict pshared) {
+	return 0;
+}
+int pthread_mutexattr_setpshared(pthread_mutexattr_t *attr,	int pshared) {
+	return 0;
+}
 
 int pthread_condattr_getpshared(pthread_condattr_t *attr, int *pshared) {
 	*pshared = 0;
@@ -161,6 +170,42 @@ int pthread_condattr_getpshared(pthread_condattr_t *attr, int *pshared) {
 }
 
 int pthread_condattr_setpshared(pthread_condattr_t* attr, int pshared) {
+	return 0;
+}
+
+int pthread_detach(pthread_t thread) {
+	if(thread && thread->handle != 0 && thread->handle != -1) {
+		CloseHandle(thread->handle);
+	}
+}
+
+int pthread_setschedparam(pthread_t thread, int policy, const struct sched_param *param) {
+	return 0;
+}
+int pthread_getschedparam(pthread_t thread, int *policy, struct sched_param *param) {
+	return 0;
+}
+
+int pthread_mutexattr_init(pthread_mutexattr_t *attr) {
+	return 0;
+}
+int pthread_mutexattr_destroy(pthread_mutexattr_t *attr) {
+	return 0;
+}
+
+int pthread_condattr_init(pthread_condattr_t *attr){
+	return 0;
+}
+
+int pthread_condattr_destroy(pthread_condattr_t *attr) {
+	return 0;
+}
+
+int pthread_mutexattr_gettype(const pthread_mutexattr_t *restrict attr, int *restrict type) {
+	return 0;
+}
+
+int pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type){
 	return 0;
 }
 

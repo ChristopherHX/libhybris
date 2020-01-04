@@ -1,5 +1,5 @@
 #pragma once
-#include <msvc.h>
+#include "msvc.h"
 #include <time.h>
 
 typedef HANDLE sem_t;

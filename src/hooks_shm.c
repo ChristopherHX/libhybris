@@ -89,7 +89,9 @@ static void _release_shm(void)
         close(_hybris_shm_fd);   /* close the shm file descriptor */
         _hybris_shm_fd = -1;
     }
+#ifndef _WIN32
     shm_unlink(HYBRIS_SHM_PATH);  /* request the deletion of the shm region */
+#endif
 }
 
 /*
@@ -102,7 +104,7 @@ static void _sync_mmap_with_shm()
             /* Note that mremap may change the address pointed by _hybris_shm_data.
              * But as we never point directly into _hybris_shm_data, it's fine.
              * */
-#if !defined(__APPLE__) && !defined(_WIN32)
+#if defined(__APPLE__) || defined(_WIN32)
             // TODO: Implement it somehow?
             abort();
 #else

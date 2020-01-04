@@ -79,9 +79,12 @@ static void hybris_set_mutex_attr(unsigned int android_value, pthread_mutexattr_
 
     if (android_value & ANDROID_PTHREAD_RECURSIVE_MUTEX_INITIALIZER) {
         pthread_mutexattr_settype(attr, PTHREAD_MUTEX_RECURSIVE);
-    } else if (android_value & ANDROID_PTHREAD_ERRORCHECK_MUTEX_INITIALIZER) {
+    }
+#ifndef _WIN32
+else if (android_value & ANDROID_PTHREAD_ERRORCHECK_MUTEX_INITIALIZER) {
         pthread_mutexattr_settype(attr, PTHREAD_MUTEX_ERRORCHECK);
     }
+#endif
 }
 
 static pthread_mutex_t* hybris_alloc_init_mutex(unsigned int android_mutex)
@@ -671,118 +674,6 @@ static int my_pthread_cond_timedwait_relative_np(pthread_cond_t *cond,
 }
 #endif
 
-/*
- * pthread_rwlockattr_* functions
- *
- * Specific implementations to workaround the differences between at the
- * pthread_rwlockattr_t struct differences between Bionic and Glibc.
- *
- * */
-
-static int my_pthread_rwlockattr_init(pthread_rwlockattr_t *__attr)
-{
-    pthread_rwlockattr_t *realattr;
-
-    realattr = malloc(sizeof(pthread_rwlockattr_t));
-    *((unsigned int *)__attr) = (unsigned int) realattr;
-
-    return pthread_rwlockattr_init(realattr);
-}
-
-static int my_pthread_rwlockattr_destroy(pthread_rwlockattr_t *__attr)
-{
-    int ret;
-    pthread_rwlockattr_t *realattr = (pthread_rwlockattr_t *) *(unsigned int *) __attr;
-
-    ret = pthread_rwlockattr_destroy(realattr);
-    free(realattr);
-
-    return ret;
-}
-
-static int my_pthread_rwlockattr_setpshared(pthread_rwlockattr_t *__attr,
-                                            int pshared)
-{
-    pthread_rwlockattr_t *realattr = (pthread_rwlockattr_t *) *(unsigned int *) __attr;
-#ifdef __APPLE__
-    pshared = pshared == 1 ? PTHREAD_PROCESS_SHARED : PTHREAD_PROCESS_PRIVATE;
-#endif
-    return pthread_rwlockattr_setpshared(realattr, pshared);
-}
-
-static int my_pthread_rwlockattr_getpshared(pthread_rwlockattr_t *__attr,
-                                            int *pshared)
-{
-    pthread_rwlockattr_t *realattr = (pthread_rwlockattr_t *) *(unsigned int *) __attr;
-#ifdef __APPLE__
-    int ret = pthread_rwlockattr_getpshared(realattr, pshared);
-    if (*pshared == PTHREAD_PROCESS_PRIVATE)
-        *pshared = 0;
-    else if (*pshared == PTHREAD_PROCESS_SHARED)
-        *pshared = 1;
-    return ret;
-#else
-    return pthread_rwlockattr_getpshared(realattr, pshared);
-#endif
-}
-
-/*
- * pthread_rwlock_* functions
- *
- * Specific implementations to workaround the differences between at the
- * pthread_rwlock_t struct differences between Bionic and Glibc.
- *
- * */
-
-static int my_pthread_rwlock_init(pthread_rwlock_t *__rwlock,
-                                  __const pthread_rwlockattr_t *__attr)
-{
-    pthread_rwlock_t *realrwlock = NULL;
-    pthread_rwlockattr_t *realattr = NULL;
-    int pshared = PTHREAD_PROCESS_PRIVATE;
-
-    if (__attr != NULL)
-        realattr = (pthread_rwlockattr_t *) *(unsigned int *) __attr;
-
-    if (realattr)
-        pthread_rwlockattr_getpshared(realattr, &pshared);
-
-    if (pshared == PTHREAD_PROCESS_PRIVATE) {
-        /* non shared, standard rwlock: use malloc */
-        realrwlock = malloc(sizeof(pthread_rwlock_t));
-
-        *((unsigned int *) __rwlock) = (unsigned int) realrwlock;
-    }
-    else {
-        /* process-shared condition: use the shared memory segment */
-        hybris_shm_pointer_t handle = hybris_shm_alloc(sizeof(pthread_rwlock_t));
-
-        *((unsigned int *)__rwlock) = (unsigned int) handle;
-
-        if (handle)
-            realrwlock = (pthread_rwlock_t *)hybris_get_shmpointer(handle);
-    }
-
-    return pthread_rwlock_init(realrwlock, realattr);
-}
-
-static int my_pthread_rwlock_destroy(pthread_rwlock_t *__rwlock)
-{
-    int ret;
-    pthread_rwlock_t *realrwlock = (pthread_rwlock_t *) *(unsigned int *) __rwlock;
-
-    if (!hybris_is_pointer_in_shm((void*)realrwlock)) {
-        ret = pthread_rwlock_destroy(realrwlock);
-        free(realrwlock);
-    }
-    else {
-        ret = pthread_rwlock_destroy(realrwlock);
-        realrwlock = (pthread_rwlock_t *)hybris_get_shmpointer((hybris_shm_pointer_t)realrwlock);
-    }
-
-    return ret;
-}
-
 static pthread_rwlock_t* hybris_set_realrwlock(pthread_rwlock_t *rwlock)
 {
     unsigned int value = (*(unsigned int *) rwlock);
@@ -795,63 +686,6 @@ static pthread_rwlock_t* hybris_set_realrwlock(pthread_rwlock_t *rwlock)
         *((unsigned int *)rwlock) = (unsigned int) realrwlock;
     }
     return realrwlock;
-}
-
-static int my_pthread_rwlock_rdlock(pthread_rwlock_t *__rwlock)
-{
-    pthread_rwlock_t *realrwlock = hybris_set_realrwlock(__rwlock);
-    return pthread_rwlock_rdlock(realrwlock);
-}
-
-static int my_pthread_rwlock_tryrdlock(pthread_rwlock_t *__rwlock)
-{
-    pthread_rwlock_t *realrwlock = hybris_set_realrwlock(__rwlock);
-    return pthread_rwlock_tryrdlock(realrwlock);
-}
-
-static int my_pthread_rwlock_wrlock(pthread_rwlock_t *__rwlock)
-{
-    pthread_rwlock_t *realrwlock = hybris_set_realrwlock(__rwlock);
-    return pthread_rwlock_wrlock(realrwlock);
-}
-
-static int my_pthread_rwlock_trywrlock(pthread_rwlock_t *__rwlock)
-{
-    pthread_rwlock_t *realrwlock = hybris_set_realrwlock(__rwlock);
-    return pthread_rwlock_trywrlock(realrwlock);
-}
-
-#ifndef __APPLE__
-
-static int my_pthread_rwlock_timedrdlock(pthread_rwlock_t *__rwlock,
-                                         __const struct timespec *abs_timeout)
-{
-    pthread_rwlock_t *realrwlock = hybris_set_realrwlock(__rwlock);
-    return pthread_rwlock_timedrdlock(realrwlock, abs_timeout);
-}
-
-static int my_pthread_rwlock_timedwrlock(pthread_rwlock_t *__rwlock,
-                                         __const struct timespec *abs_timeout)
-{
-    pthread_rwlock_t *realrwlock = hybris_set_realrwlock(__rwlock);
-    return pthread_rwlock_timedwrlock(realrwlock, abs_timeout);
-}
-
-#endif
-
-static int my_pthread_rwlock_unlock(pthread_rwlock_t *__rwlock)
-{
-    unsigned int value = (*(unsigned int *) __rwlock);
-    if (value <= ANDROID_TOP_ADDR_VALUE_RWLOCK) {
-        LOGD("Trying to unlock a rwlock that's not locked/initialized"
-                     " by Hybris, not unlocking.");
-        return 0;
-    }
-    pthread_rwlock_t *realrwlock = (pthread_rwlock_t *) value;
-    if (hybris_is_pointer_in_shm((void*)value))
-        realrwlock = (pthread_rwlock_t *)hybris_get_shmpointer((hybris_shm_pointer_t)value);
-
-    return pthread_rwlock_unlock(realrwlock);
 }
 
 static void my_pthread_cleanup_push(void (*routine)(void *),

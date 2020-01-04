@@ -102,14 +102,14 @@ extern "C" {
 	int link(const char *oldpath, const char *newpath);
 	pid_t waitpid(pid_t pid, int *status, int options);
 	void msvc_startup();
-	struct utsname {
-		char sysname[16];
-		char nodename[1];
-		char release[16];
-		char version[16];
-		char machine[1];
-	};
-	int uname(struct utsname *buf);
+	// struct utsname {
+	// 	char sysname[16];
+	// 	char nodename[1];
+	// 	char release[16];
+	// 	char version[16];
+	// 	char machine[1];
+	// };
+	// int uname(struct utsname *buf);
 #define WNOHANG 1
 	struct passwd {
 		char *pw_name;
@@ -236,7 +236,7 @@ static inline unsigned int alarm(unsigned int seconds)
 		return NULL;
 	}
 
-	typedef int uid_t;
+	typedef short uid_t;
 
 	static inline uid_t getuid(void)
 	{

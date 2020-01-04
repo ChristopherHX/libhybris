@@ -398,7 +398,16 @@ int stub() {
 #define epoll_wait stub
 #define if_freenameindex stub
 #define madvise stub
-#define if_freenameindex stub
+#define writev stub
+#define syscall stub
+#define clock_gettime stub
+
+int nanosleep(const struct timespec *req, struct timespec *rem) {
+    Sleep(req->tv_sec * 1000 + req->tv_nsec / 1000000);
+}
+int usleep(unsigned int usec) {
+    Sleep(usec / 1000);
+}
 
 #define valloc malloc
 #define strtoq strtol
@@ -584,14 +593,14 @@ struct _hook main_hooks[] = {
     {"strerror",strerror},
     {"strnlen",strnlen},
     {"strncat",strncat},
-    {"strndup",strndup},
+    // {"strndup",strndup},
     {"strncmp",strncmp},
     {"strncpy",strncpy},
     // {"strlcat",strlcat},
     {"strlcpy",strlcpy},
     {"strcspn",strcspn},
     {"strpbrk",strpbrk},
-    {"strsep",strsep},
+    // {"strsep",strsep},
     {"strspn",strspn},
     // {"strsignal",strsignal},
     // {"getgrnam", getgrnam},
@@ -744,7 +753,7 @@ struct _hook main_hooks[] = {
     {"sync", sync},
     // {"getpagesize", getpagesize},
     // {"getdtablesize", getdtablesize},
-    {"truncate", truncate},
+    // {"truncate", truncate},
     // {"truncate64", truncate64},
     {"ftruncate", ftruncate},
     // {"ftruncate64", ftruncate64},
@@ -765,7 +774,7 @@ struct _hook main_hooks[] = {
     {"difftime", difftime},
     {"mktime", mktime},
     {"strftime", strftime},
-    {"strptime", strptime},
+    // {"strptime", strptime},
     {"gmtime", gmtime},
     {"localtime", localtime},
     {"gmtime_r", gmtime_r},

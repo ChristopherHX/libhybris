@@ -136,6 +136,12 @@ typedef struct
 #endif /* __USE_GNU */
 
 
+#define dlopen(filename, flag) (void*)LoadLibraryA(filename)
+#define dlsym(handle, symbol) (void*)GetProcAddress((HMODULE)handle, symbol)
+#define dlclose(handle) FreeLibrary((HMODULE)handle)
+#define dladdr(a,b) 0
+#define dlerror() 0
+
 #ifdef __cplusplus
 }
 #endif

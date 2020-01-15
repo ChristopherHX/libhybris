@@ -3,7 +3,7 @@
 #include <string>
 #include <cvt/utf8_utf16>
 #include <fcntl.h>
-#include <utime.h>
+#include "utime.h"
 #include <signal.h>
 #include <cstdio>
 #include <unordered_map>
@@ -545,45 +545,45 @@ void msvc_exit()
 	WSACleanup();
 }
 
-void msvc_startup()
-{
-	{
-		WSADATA data;
-		WSAStartup(WINSOCK_VERSION, &data);
-	}
-	HANDLE hout = GetStdHandle(STD_OUTPUT_HANDLE);
-	RTL_OSVERSIONINFOW ver;
-	RtlGetVersion(&ver);
-	icodepage = GetConsoleCP();
-	codepage = GetConsoleOutputCP();
-	GetConsoleMode(hout, &mode);
-	if(ver.dwBuildNumber >= 14393) {
-		charset = "utf-8";
-		SetConsoleCP(CP_UTF8);
-		SetConsoleOutputCP(CP_UTF8);
-		setenv(u8"TERM", u8"xterm-256color", 0);
-		SetConsoleMode(hout, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-	} else {
-		char * chs = new char[10];
-		chs[0] = 'c';
-		chs[1] = 'p';
-		itoa(codepage, chs + 2, 10);
-		charset = chs;
-	}
-	setlocale( LC_ALL, ".65001" );
-	_setmode(_fileno(stdin), _O_BINARY);
-	_setmode(_fileno(stdout), _O_BINARY);
-	_setmode(_fileno(stderr), _O_BINARY );
-	_argv = CommandLineToArgv(GetCommandLineW());
-	auto & argc = __argc = _argv.size();
-	auto & argv = __argv = (char**)HeapAlloc(GetProcessHeap(), 0, (argc + 1) * sizeof(char*));
-	for (int i = 0; i < argc; i++)
-	{
-		argv[i] = (char*)_argv[i].data();
-	}
-	argv[argc] = 0;
-	atexit(msvc_exit);
-}
+// void msvc_startup()
+// {
+// 	{
+// 		WSADATA data;
+// 		WSAStartup(WINSOCK_VERSION, &data);
+// 	}
+// 	HANDLE hout = GetStdHandle(STD_OUTPUT_HANDLE);
+// 	RTL_OSVERSIONINFOW ver;
+// 	RtlGetVersion(&ver);
+// 	icodepage = GetConsoleCP();
+// 	codepage = GetConsoleOutputCP();
+// 	GetConsoleMode(hout, &mode);
+// 	if(ver.dwBuildNumber >= 14393) {
+// 		charset = "utf-8";
+// 		SetConsoleCP(CP_UTF8);
+// 		SetConsoleOutputCP(CP_UTF8);
+// 		setenv(u8"TERM", u8"xterm-256color", 0);
+// 		SetConsoleMode(hout, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+// 	} else {
+// 		char * chs = new char[10];
+// 		chs[0] = 'c';
+// 		chs[1] = 'p';
+// 		itoa(codepage, chs + 2, 10);
+// 		charset = chs;
+// 	}
+// 	setlocale( LC_ALL, ".65001" );
+// 	_setmode(_fileno(stdin), _O_BINARY);
+// 	_setmode(_fileno(stdout), _O_BINARY);
+// 	_setmode(_fileno(stderr), _O_BINARY );
+// 	_argv = CommandLineToArgv(GetCommandLineW());
+// 	auto & argc = __argc = _argv.size();
+// 	auto & argv = __argv = (char**)HeapAlloc(GetProcessHeap(), 0, (argc + 1) * sizeof(char*));
+// 	for (int i = 0; i < argc; i++)
+// 	{
+// 		argv[i] = (char*)_argv[i].data();
+// 	}
+// 	argv[argc] = 0;
+// 	atexit(msvc_exit);
+// }
 
 void SyncEnv()
 {
@@ -1067,4 +1067,19 @@ extern "C" int xwcstoutf(char *utf, const wchar_t *wcs, size_t utflen)
 		return utflen - 1;
 	errno = ERANGE;
 	return -1;
+}
+
+#include <algorithm>
+
+extern "C" char *strsep(char **stringp, const char *delim) {
+	if(!stringp) return nullptr;
+	auto ldel = strlen(delim);
+	auto end = *stringp + strlen(*stringp);
+	auto ret = std::search(*stringp, end, delim, delim + ldel);
+	if(ret != end) {
+		*ret = '\0';
+		auto vret = *stringp;
+		*stringp = ret + ldel;
+		return vret;
+	}
 }

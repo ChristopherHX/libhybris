@@ -13,6 +13,10 @@
 
 #include "msvc.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Defines that adapt Windows API threads to pthreads API
  */
@@ -65,150 +69,73 @@ extern int pthread_create(pthread_t *thread, const void *unused,
 
 extern int pthread_join(pthread_t thread, void **value_ptr);
 
-int pthread_equal(pthread_t t1, pthread_t t2) {
-	return ((t1)->tid == (t2)->tid);
-}
 extern pthread_t pthread_self(void);
 
-static void pthread_exit(void *ret)
-{
-	ExitThread((DWORD)(intptr_t)ret);
-}
+int pthread_equal(pthread_t t1, pthread_t t2);
 
-int pthread_kill(pthread_t thread, int sig) {
-	HANDLE threadh = OpenThread(THREAD_TERMINATE, FALSE, thread->tid);
-	TerminateThread(threadh, sig);
-	CloseHandle(threadh);
-	return 0;
-}
+void pthread_exit(void *ret);
+int pthread_kill(pthread_t thread, int sig);
 
 typedef DWORD pthread_key_t;
-static int pthread_key_create(pthread_key_t *keyp, void (*destructor)(void *value))
-{
-	return (*keyp = TlsAlloc()) == TLS_OUT_OF_INDEXES ? EAGAIN : 0;
-}
+int pthread_key_create(pthread_key_t *keyp, void (*destructor)(void *value));
 
-static int pthread_key_delete(pthread_key_t key)
-{
-	return TlsFree(key) ? 0 : EINVAL;
-}
+int pthread_key_delete(pthread_key_t key);
 
-static int pthread_setspecific(pthread_key_t key, const void *value)
-{
-	return TlsSetValue(key, (void *)value) ? 0 : EINVAL;
-}
+int pthread_setspecific(pthread_key_t key, const void *value);
 
-static void *pthread_getspecific(pthread_key_t key)
-{
-	return TlsGetValue(key);
-}
+void *pthread_getspecific(pthread_key_t key);
 
 #ifndef __MINGW64_VERSION_MAJOR
-static int pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
-{
-	return 0;
-}
+int pthread_sigmask(int how, const sigset_t *set, sigset_t *oset);
 #endif
 
-BOOL CALLBACK pthread_onceInternal(PINIT_ONCE InitOnce, PVOID Parameter, PVOID *lpContex) {
-    ((void (*)(void))Parameter)();
-    return TRUE;
-}
-
 typedef volatile int pthread_once_t;
-int pthread_once(pthread_once_t  *once_control, void (*init_routine)(void)) {
-    InitOnceExecuteOnce((PINIT_ONCE) once_control, pthread_onceInternal, init_routine, NULL);
-	return 0;
-}
+int pthread_once(pthread_once_t  *once_control, void (*init_routine)(void));
 
-//  
-// Usage: SetThreadName ((DWORD)-1, "MainThread");  
-//  
-#include <windows.h>  
-const DWORD MS_VC_EXCEPTION = 0x406D1388;  
-#pragma pack(push,8)  
-typedef struct tagTHREADNAME_INFO  
-{  
-    DWORD dwType; // Must be 0x1000.  
-    LPCSTR szName; // Pointer to name (in user addr space).  
-    DWORD dwThreadID; // Thread ID (-1=caller thread).  
-    DWORD dwFlags; // Reserved for future use, must be zero.  
- } THREADNAME_INFO;  
-#pragma pack(pop)  
-void SetThreadName(DWORD dwThreadID, const char* threadName) {  
-    THREADNAME_INFO info;  
-    info.dwType = 0x1000;  
-    info.szName = threadName;  
-    info.dwThreadID = dwThreadID;  
-    info.dwFlags = 0;  
-#pragma warning(push)  
-#pragma warning(disable: 6320 6322)  
-    __try{  
-        RaiseException(MS_VC_EXCEPTION, 0, sizeof(info) / sizeof(ULONG_PTR), (ULONG_PTR*)&info);  
-    }  
-    __except (EXCEPTION_EXECUTE_HANDLER){  
-    }  
-#pragma warning(pop)  
-}  
-  
+int pthread_setname_np(pthread_t thid, const char *thname);
+int pthread_mutexattr_getpshared(const pthread_mutexattr_t * attr, int * pshared);
+int pthread_mutexattr_setpshared(pthread_mutexattr_t *attr,	int pshared);
 
-int pthread_setname_np(pthread_t thid, const char *thname) {
-	SetThreadName(thid->tid, thname);
-	return 0;
-}
+int pthread_condattr_getpshared(pthread_condattr_t *attr, int *pshared);
+int pthread_condattr_setpshared(pthread_condattr_t* attr, int pshared);
 
-int pthread_mutexattr_getpshared(const pthread_mutexattr_t *restrict attr, int *restrict pshared) {
-	return 0;
-}
-int pthread_mutexattr_setpshared(pthread_mutexattr_t *attr,	int pshared) {
-	return 0;
-}
+int pthread_detach(pthread_t thread);
+struct sched_param {};
+int pthread_setschedparam(pthread_t thread, int policy, const struct sched_param *param);
+int pthread_getschedparam(pthread_t thread, int *policy, struct sched_param *param);
 
-int pthread_condattr_getpshared(pthread_condattr_t *attr, int *pshared) {
-	*pshared = 0;
-	return 0;
-}
+int pthread_mutexattr_init(pthread_mutexattr_t *attr);
+int pthread_mutexattr_destroy(pthread_mutexattr_t *attr);
 
-int pthread_condattr_setpshared(pthread_condattr_t* attr, int pshared) {
-	return 0;
-}
+int pthread_condattr_init(pthread_condattr_t *attr);
 
-int pthread_detach(pthread_t thread) {
-	if(thread && thread->handle != 0 && thread->handle != -1) {
-		CloseHandle(thread->handle);
-	}
-}
+int pthread_condattr_destroy(pthread_condattr_t *attr);
 
-int pthread_setschedparam(pthread_t thread, int policy, const struct sched_param *param) {
-	return 0;
-}
-int pthread_getschedparam(pthread_t thread, int *policy, struct sched_param *param) {
-	return 0;
-}
+int pthread_mutexattr_gettype(const pthread_mutexattr_t * attr, int * type);
 
-int pthread_mutexattr_init(pthread_mutexattr_t *attr) {
-	return 0;
-}
-int pthread_mutexattr_destroy(pthread_mutexattr_t *attr) {
-	return 0;
-}
+int pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type);
 
-int pthread_condattr_init(pthread_condattr_t *attr){
-	return 0;
-}
+int pthread_mutex_timedlock(pthread_mutex_t * mutex, const struct timespec * abstime);
 
-int pthread_condattr_destroy(pthread_condattr_t *attr) {
-	return 0;
-}
+// int pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex, const struct timespec * abstime);
+#define pthread_cond_timedwait(a,b,c) return_0((SleepConditionVariableCS((a), (b), abstime->tv_sec * 1000 + abstime->tv_nsec / 1000000),0))
 
-int pthread_mutexattr_gettype(const pthread_mutexattr_t *restrict attr, int *restrict type) {
-	return 0;
+int pthread_attr_init(pthread_attr_t *attr);
+int pthread_attr_destroy(pthread_attr_t *attr);
+int pthread_attr_setdetachstate(pthread_attr_t *attr, int detachstate);
+int pthread_attr_getdetachstate(const pthread_attr_t *attr, int *detachstate);
+int pthread_attr_setschedparam(pthread_attr_t *attr, const struct sched_param *param);
+int pthread_attr_getschedparam(const pthread_attr_t *attr, struct sched_param *param);
+int pthread_attr_setstacksize(pthread_attr_t *attr, size_t stacksize);
+int pthread_attr_getstacksize(const pthread_attr_t *attr, size_t *stacksize);
+int pthread_attr_setstack(pthread_attr_t *attr,	void *stackaddr, size_t stacksize);
+int pthread_attr_getstack(const pthread_attr_t *attr, void **stackaddr, size_t *stacksize);
+int pthread_attr_setguardsize(pthread_attr_t *attr, size_t guardsize);
+int pthread_attr_getguardsize(const pthread_attr_t *attr, size_t *guardsize);
+int pthread_attr_setscope(pthread_attr_t *attr, int scope);
+int pthread_attr_getscope(const pthread_attr_t *attr, int *scope);
+#ifdef __cplusplus
 }
-
-int pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type){
-	return 0;
-}
-
-#define PTHREAD_MUTEX_INITIALIZER {}
+#endif
 
 #endif /* PTHREAD_H */

@@ -1,6 +1,6 @@
 #ifndef __MSVC__HEAD
 #define __MSVC__HEAD
-
+#define NOMINMAX
 #pragma warning( disable : 4141)
 typedef int sigset_t;
 #include <sys/stat.h>
@@ -13,7 +13,6 @@ typedef int sigset_t;
 #include <ws2tcpip.h>
 #include <afunix.h>
 #include <Shlwapi.h>
-#include <Pathcch.h>
 #include <signal.h>
 #include <inttypes.h>
 
@@ -84,7 +83,7 @@ extern "C" {
 	int msvc_connect(int sockfd, struct sockaddr *sa, size_t sz);
 #define connect msvc_connect
 	int msvc_bind(int sockfd, struct sockaddr *sa, size_t sz);
-#define bind msvc_bind
+// #define bind msvc_bind
 	int msvc_setsockopt(int sockfd, int lvl, int optname, void *optval, int optlen);
 #define setsockopt msvc_setsockopt
 	int msvc_shutdown(int sockfd, int how);
@@ -101,7 +100,7 @@ extern "C" {
 	int readlink(const char *path, char *buf, size_t bufsiz);
 	int link(const char *oldpath, const char *newpath);
 	pid_t waitpid(pid_t pid, int *status, int options);
-	void msvc_startup();
+	// void msvc_startup();
 	// struct utsname {
 	// 	char sysname[16];
 	// 	char nodename[1];

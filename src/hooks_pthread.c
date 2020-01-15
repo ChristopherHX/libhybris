@@ -45,7 +45,7 @@
 #define ANDROID_PTHREAD_COND_INITIALIZER             0
 #define ANDROID_PTHREAD_RWLOCK_INITIALIZER           0
 
-static pthread_mutex_t hybris_static_init_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t hybris_static_init_mutex;// = PTHREAD_MUTEX_INITIALIZER;
 
 /* Helpers */
 static int hybris_check_android_shared_mutex(unsigned int mutex_addr)
@@ -438,36 +438,6 @@ static int my_pthread_mutex_unlock(pthread_mutex_t *__mutex)
     return pthread_mutex_unlock(realmutex);
 }
 
-#ifndef __APPLE__
-static int my_pthread_mutex_lock_timeout_np(pthread_mutex_t *__mutex, unsigned __msecs)
-{
-    struct timespec tv;
-    pthread_mutex_t *realmutex;
-    unsigned int value = (*(unsigned int *) __mutex);
-
-    if (hybris_check_android_shared_mutex(value)) {
-        LOGD("Shared mutex with Android, not lock timeout np.");
-        return 0;
-    }
-
-    realmutex = (pthread_mutex_t *) value;
-
-    if (value <= ANDROID_TOP_ADDR_VALUE_MUTEX) {
-        realmutex = my_static_init_mutex(__mutex);
-    }
-
-    clock_gettime(CLOCK_REALTIME, &tv);
-    tv.tv_sec += __msecs/1000;
-    tv.tv_nsec += (__msecs % 1000) * 1000000;
-    if (tv.tv_nsec >= 1000000000) {
-        tv.tv_sec++;
-        tv.tv_nsec -= 1000000000;
-    }
-
-    return pthread_mutex_timedlock(realmutex, &tv);
-}
-#endif
-
 /*
  * pthread_cond* functions
  *
@@ -631,48 +601,6 @@ static int my_pthread_cond_timedwait(pthread_cond_t *cond,
 
     return pthread_cond_timedwait(realcond, realmutex, abstime);
 }
-
-#ifndef __APPLE__
-static int my_pthread_cond_timedwait_relative_np(pthread_cond_t *cond,
-                                                 pthread_mutex_t *mutex, const struct timespec *reltime)
-{
-    /* Both cond and mutex can be statically initialized, check for both */
-    unsigned int cvalue = (*(unsigned int *) cond);
-    unsigned int mvalue = (*(unsigned int *) mutex);
-
-    if (hybris_check_android_shared_cond(cvalue) ||
-        hybris_check_android_shared_mutex(mvalue)) {
-        LOGD("Shared condition/mutex with Android, not waiting.");
-        return 0;
-    }
-
-    pthread_cond_t *realcond = (pthread_cond_t *) cvalue;
-    if( hybris_is_pointer_in_shm((void*)cvalue) )
-        realcond = (pthread_cond_t *)hybris_get_shmpointer((hybris_shm_pointer_t)cvalue);
-
-    if (cvalue <= ANDROID_TOP_ADDR_VALUE_COND) {
-        realcond = my_static_init_cond(cond);
-    }
-
-    pthread_mutex_t *realmutex = (pthread_mutex_t *) mvalue;
-    if (hybris_is_pointer_in_shm((void*)mvalue))
-        realmutex = (pthread_mutex_t *)hybris_get_shmpointer((hybris_shm_pointer_t)mvalue);
-
-    if (mvalue <= ANDROID_TOP_ADDR_VALUE_MUTEX) {
-        realmutex = my_static_init_mutex(mutex);
-    }
-
-    struct timespec tv;
-    clock_gettime(CLOCK_REALTIME, &tv);
-    tv.tv_sec += reltime->tv_sec;
-    tv.tv_nsec += reltime->tv_nsec;
-    if (tv.tv_nsec >= 1000000000) {
-        tv.tv_sec++;
-        tv.tv_nsec -= 1000000000;
-    }
-    return pthread_cond_timedwait(realcond, realmutex, &tv);
-}
-#endif
 
 static pthread_rwlock_t* hybris_set_realrwlock(pthread_rwlock_t *rwlock)
 {
@@ -919,9 +847,6 @@ struct _hook pthread_hooks[] = {
     {"pthread_mutex_lock", my_pthread_mutex_lock},
     {"pthread_mutex_unlock", my_pthread_mutex_unlock},
     {"pthread_mutex_trylock", my_pthread_mutex_trylock},
-#ifndef __APPLE__
-    {"pthread_mutex_lock_timeout_np", my_pthread_mutex_lock_timeout_np},
-#endif
 #ifdef __APPLE__
     {"pthread_mutexattr_init", darwin_my_pthread_mutexattr_init},
     {"pthread_mutexattr_destroy", darwin_my_pthread_mutexattr_destroy},
@@ -949,9 +874,6 @@ struct _hook pthread_hooks[] = {
     {"pthread_cond_timedwait", my_pthread_cond_timedwait},
     {"pthread_cond_timedwait_monotonic", my_pthread_cond_timedwait},
     {"pthread_cond_timedwait_monotonic_np", my_pthread_cond_timedwait},
-#ifndef __APPLE__
-    {"pthread_cond_timedwait_relative_np", my_pthread_cond_timedwait_relative_np},
-#endif
     {"pthread_key_delete", pthread_key_delete},
     {"pthread_setname_np", pthread_setname_np},
 #ifdef __APPLE__

@@ -273,8 +273,10 @@ FP_ATTRIB static double my_strtod(const char *nptr, char **endptr)
 #endif
 }
 
-extern int __cxa_atexit(void (*)(void*), void*, void*);
-extern void __cxa_finalize(void * d);
+int __cxa_atexit(void (*a)(void*), void*b, void*v) {
+    return 0;
+}
+ void __cxa_finalize(void * d) {}
 
 
 /**
@@ -297,9 +299,15 @@ void *__get_tls_hooks()
   return tls_hooks;
 }
 
-extern off_t __umoddi3(off_t a, off_t b);
-extern off_t __udivdi3(off_t a, off_t b);
-extern off_t __divdi3(off_t a, off_t b);
+off_t __umoddi3(off_t a, off_t b) {
+    return 0;
+}
+off_t __udivdi3(off_t a, off_t b) {
+    return 0;
+}
+off_t __divdi3(off_t a, off_t b) {
+    return 0;
+}
 
 void _hybris_stack_stack_chk_fail() {
     printf("__stack_chk_fail\n");
@@ -401,6 +409,7 @@ int stub() {
 #define writev stub
 #define syscall stub
 #define clock_gettime stub
+#define strptime stub
 
 int nanosleep(const struct timespec *req, struct timespec *rem) {
     Sleep(req->tv_sec * 1000 + req->tv_nsec / 1000000);
@@ -413,21 +422,30 @@ int usleep(unsigned int usec) {
 #define strtoq strtol
 #define strtouq strtoul
 
-int pipe(int* _PtHandles, int flags) {
-    return _pipe(_PtHandles, 1024, flags);
+extern BOOL APIENTRY MyCreatePipeEx(
+    OUT LPHANDLE lpReadPipe,
+    OUT LPHANDLE lpWritePipe,
+    IN LPSECURITY_ATTRIBUTES lpPipeAttributes,
+    IN DWORD nSize,
+    DWORD dwReadMode,
+    DWORD dwWriteMode
+    );
+
+int pipe(int* _PtHandles) {
+    HANDLE readpipe, writepipe;
+    if(MyCreatePipeEx(&readpipe, &writepipe, NULL, 128, FILE_FLAG_OVERLAPPED, NULL)) {
+        _PtHandles[0] = _open_osfhandle((intptr_t)readpipe, O_BINARY);
+        _PtHandles[1] = _open_osfhandle((intptr_t)writepipe, O_BINARY);
+        return 0;
+    } else {
+        return -1;
+    }
+    // return _pipe(_PtHandles, 128, O_BINARY | _O_NOINHERIT);
 }
 
 #define sync _flushall
 
 extern char *realpath(const char *path, char *resolved_path);
-struct tm *gmtime_r(const time_t *timep, struct tm *result) {
-    gmtime_s(result, timep);
-    return result;
-}
-struct tm *localtime_r(const time_t *timep, struct tm *result) {
-    localtime_s(result, timep);
-    return result;
-}
 #define bcmp memcmp
 #define bcopy memmove
 void bzero (void *__s, size_t __n) {
@@ -774,7 +792,7 @@ struct _hook main_hooks[] = {
     {"difftime", difftime},
     {"mktime", mktime},
     {"strftime", strftime},
-    // {"strptime", strptime},
+    {"strptime", strptime},
     {"gmtime", gmtime},
     {"localtime", localtime},
     {"gmtime_r", gmtime_r},

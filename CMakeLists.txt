@@ -14,7 +14,7 @@ if(APPLE)
 else()
     set(HYBRIS_SOURCES ${HYBRIS_SOURCES} src/strlcpy.c src/hooks_list.c src/hooks_list.h)
     if(WIN32)
-        set(HYBRIS_SOURCES ${HYBRIS_SOURCES} include/windows/dirent.c include/windows/msvc.cpp include/windows/poll.c include/windows/pthread.c include/windows/win32mmap.c)
+        set(HYBRIS_SOURCES ${HYBRIS_SOURCES} include/windows/pipeex.c include/windows/semaphore.c include/windows/dirent.c include/windows/msvc.cpp include/windows/poll.c include/windows/pthread.c include/windows/win32mmap.c)
     endif()
 endif()
 

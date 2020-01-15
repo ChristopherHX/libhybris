@@ -35,6 +35,7 @@ extern "C" {
 
 #include "hybris/jb/linker.h"
 #include "linker_format.h"
+#include "../hooks_list.h"
 
 /* This file hijacks the symbols stubbed out in libdl.so. */
 
@@ -68,6 +69,16 @@ static pthread_mutex_t dl_lock
 #else
  = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 #endif
+extern "C" pthread_mutex_t _r_debug_lock;
+extern "C" pthread_mutex_t hybris_static_init_mutex;
+void my_constructor1PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP(void) __attribute__((constructor));
+void my_constructor1PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP(void) /* This is the 3rd constructor */
+{                        /* function to be called */
+    pthread_mutex_init(&dl_lock, 0);
+    pthread_mutex_init(&_r_debug_lock, 0);
+    pthread_mutex_init(&hybris_static_init_mutex, 0);
+    hybris_register_default_hooks();
+}
 #endif
 
 static void set_dlerror(int err)

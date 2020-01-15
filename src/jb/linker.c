@@ -179,7 +179,7 @@ static struct r_debug _r_debug = {1, NULL, &rtld_db_dlactivity,
                                   RT_CONSISTENT, 0};
 static struct link_map *r_debug_tail = 0;
 
-static pthread_mutex_t _r_debug_lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t _r_debug_lock;// = PTHREAD_MUTEX_INITIALIZER;
 
 static void insert_soinfo_into_debug_map(soinfo * info)
 {
@@ -613,9 +613,13 @@ static int _open_lib(const char *name)
     int fd;
     struct stat filestat;
 
-    if ((stat(name, &filestat) >= 0) && S_ISREG(filestat.st_mode)) {
-        if ((fd = open(name, O_RDONLY)) >= 0)
-            return fd;
+    if ((stat(name, &filestat) >= 0) && (filestat.st_mode & S_IFMT) == S_IFREG) {
+        HANDLE h = CreateFileA(name, GENERIC_EXECUTE | GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, INVALID_HANDLE_VALUE);
+        if(h != INVALID_HANDLE_VALUE) {
+            return _open_osfhandle(h, O_RDONLY);
+        }
+        // if ((fd = open(name, O_RDONLY)) >= 0)
+        //     return fd;
     }
 
     return -1;
@@ -635,7 +639,7 @@ static int open_library(const char *name)
     if(name == 0) return -1;
     if(strlen(name) > 256) return -1;
 
-    if ((name[0] == '/') && ((fd = _open_lib(name)) >= 0))
+    if (/* (name[0] == '/') &&  */((fd = _open_lib(name)) >= 0))
         return fd;
 
 #ifdef DEFAULT_HYBRIS_LD_LIBRARY_PATH
@@ -921,6 +925,8 @@ load_segments(int fd, void *header, soinfo *si)
         if (phdr->p_type == PT_LOAD) {
             DEBUG_DUMP_PHDR(phdr, "PT_LOAD", pid);
             /* we want to map in the segment on a page boundary */
+            // SYSTEM_INFO info;
+            // GetSystemInfo(&info);
             tmp = base + (phdr->p_vaddr & (~PAGE_MASK));
             /* add the # of bytes we masked off above to the total length. */
             len = phdr->p_filesz + (phdr->p_vaddr & PAGE_MASK);
@@ -987,12 +993,12 @@ load_segments(int fd, void *header, soinfo *si)
                                   PFLAGS_TO_PROT(phdr->p_flags),
                                   MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS,
                                   -1, 0);
-                if (extra_base == MAP_FAILED) {
-                    DL_ERR("[ %5d - failed to extend segment from '%s' @ 0x%08x"
-                           " (0x%08x) ]", pid, si->name, (unsigned)tmp,
-                          extra_len);
-                    goto fail;
-                }
+                // if (extra_base == MAP_FAILED) {
+                //     DL_ERR("[ %5d - failed to extend segment from '%s' @ 0x%08x"
+                //            " (0x%08x) ]", pid, si->name, (unsigned)tmp,
+                //           extra_len);
+                //     goto fail;
+                // }
                 /* TODO: Check if we need to memset-0 this region.
                  * Anonymous mappings are zero-filled copy-on-writes, so we
                  * shouldn't need to. */
@@ -1342,6 +1348,10 @@ unsigned unload_library(soinfo *si)
     return si->refcount;
 }
 
+int hybstub() {
+    return 0;
+}
+
 /* TODO: don't use unsigned for addrs below. It works, but is not
  * ideal. They should probably be either uint32_t, Elf32_Addr, or unsigned
  * long.
@@ -1367,7 +1377,7 @@ static int reloc_library(soinfo *si, Elf32_Rel *rel, unsigned count)
         if(sym != 0) {
             sym_name = (char *)(strtab + symtab[sym].st_name);
             INFO("HYBRIS: '%s' checking hooks for sym '%s'\n", si->name, sym_name);
-            sym_addr = (unsigned int) get_hooked_symbol(sym_name);
+            retry: sym_addr = (unsigned int) get_hooked_symbol(sym_name);
             if (sym_addr) {
                 INFO("HYBRIS: '%s' hooked symbol %s to %x\n", si->name,
                                                   sym_name, sym_addr);
@@ -1378,6 +1388,8 @@ static int reloc_library(soinfo *si, Elf32_Rel *rel, unsigned count)
             if(s == NULL) {
                 /* We only allow an undefined symbol if this is a weak
                    reference..   */
+                hybris_hook(sym_name, hybstub);
+                goto retry;
                 s = &symtab[sym];
                 if (ELF32_ST_BIND(s->st_info) != STB_WEAK && strcmp(si->name, "libdsyscalls.so") != 0) {
                     DL_ERR("%5d cannot locate '%s'...\n", pid, sym_name);
@@ -1590,6 +1602,7 @@ static void call_array(unsigned *ctor, int count, int reverse)
         ctor += inc;
         if(((int) func == 0) || ((int) func == -1)) continue;
         TRACE("[ %5d Calling func @ 0x%08x ]\n", pid, (unsigned)func);
+        // if(n != 3836 && n != 3826)
         func();
     }
 }
@@ -2056,6 +2069,8 @@ fail:
     si->flags |= FLAG_ERROR;
     return -1;
 }
+
+extern char *strsep(char **stringp, const char *delim);
 
 static void parse_library_path(const char *path, char *delim)
 {

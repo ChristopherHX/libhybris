@@ -31,7 +31,7 @@ DIR *opendir(const char *name)
 	len = MultiByteToWideChar(CP_UTF8, 0, name, -1, pattern, MAX_PATH) - 1;
 
 	/* append optional '/' and wildcard '*' */
-	if (len && !is_dir_sep(pattern[len - 1]))
+	if (len && !(pattern[len - 1] == '/' || pattern[len - 1] == '\\'))
 		pattern[len++] = '/';
 	pattern[len++] = '*';
 	pattern[len] = 0;
@@ -45,7 +45,7 @@ DIR *opendir(const char *name)
 	}
 
 	/* initialize DIR structure and copy first dir entry */
-	dir = xmalloc(sizeof(DIR));
+	dir = malloc(sizeof(DIR));
 	dir->dd_handle = h;
 	dir->dd_stat = 0;
 	finddata2dirent(&dir->dd_dir, &fdata);

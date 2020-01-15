@@ -393,7 +393,7 @@ static int my_fseek(struct aFILE* fp, long offset, int whence)
 
 static int my_fseeko(struct aFILE* fp, off_t offset, int whence)
 {
-    return fseeko(_get_actual_fp(fp), offset, whence);
+    return fseek(_get_actual_fp(fp), offset, whence);
 }
 
 static int my_fsetpos(struct aFILE* fp, const fpos_t *pos)
@@ -428,7 +428,8 @@ static int my_getc(struct aFILE* fp)
 
 static int my_getline(char **lineptr, size_t *n, struct aFILE* fp)
 {
-    return getline(lineptr, n, _get_actual_fp(fp));
+    return -1;
+    // return getline(lineptr, n, _get_actual_fp(fp));
 }
 
 
@@ -476,7 +477,11 @@ static int my_fileno(struct aFILE* fp)
 
 static int my_pclose(struct aFILE* fp)
 {
+#ifdef _WIN32
+    return _pclose(_get_actual_fp(fp));
+#else
     return pclose(_get_actual_fp(fp));
+#endif
 }
 
 /* exists only on the BSD platform
@@ -548,7 +553,7 @@ int vasprintf(char **strp, const char *fmt, va_list ap) {
         return -1;
     }
     // _vsprintf_s is the "secure" version of vsprintf
-    int r = _vsprintf_s(str, len + 1, fmt, ap);
+    int r = vsprintf_s(str, len + 1, fmt, ap);
     if (r == -1) {
         free(str);
         return -1;

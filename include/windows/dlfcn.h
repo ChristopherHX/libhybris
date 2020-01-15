@@ -22,6 +22,7 @@
 #define __need_size_t
 #include <stddef.h>
 
+#include "msvc.h"
 /* Collect various system dependent definitions and declarations.  */
 // #include <bits/dlfcn.h>
 #define __USE_GNU

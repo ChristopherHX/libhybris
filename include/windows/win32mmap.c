@@ -42,8 +42,10 @@ void *mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset
 	// if (!CloseHandle(hmap))
 	// 	warning("unable to close file mapping handle");
 
-	if (temp)
+	if (temp){
+		ZeroMemory(temp, length);
 		return temp;
+	}
 	// else {
 	// 	return start;
 	// }

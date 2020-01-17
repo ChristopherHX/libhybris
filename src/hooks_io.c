@@ -608,6 +608,9 @@ int darwin_my_poll(struct pollfd *fds, nfds_t nfds, int timeout)
 }
 
 #endif
+void stubnet2() {
+    
+}
 
 struct _hook io_hooks[] = {
     /* fcntl.h */
@@ -703,8 +706,8 @@ struct _hook io_hooks[] = {
 #ifdef __APPLE__
     {"poll", darwin_my_poll},
 #else
-    {"poll", poll},
+    {"poll", stubnet2},
 #endif
-    {"select", select},
+    {"select", stubnet2},
     {NULL, NULL}
 };

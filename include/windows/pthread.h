@@ -89,7 +89,7 @@ void *pthread_getspecific(pthread_key_t key);
 int pthread_sigmask(int how, const sigset_t *set, sigset_t *oset);
 #endif
 
-typedef volatile int pthread_once_t;
+typedef int pthread_once_t;
 int pthread_once(pthread_once_t  *once_control, void (*init_routine)(void));
 
 int pthread_setname_np(pthread_t thid, const char *thname);

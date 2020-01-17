@@ -946,10 +946,15 @@ void add_user_hook(struct _hook h, int user) {
     user_hooks[user_hooks_size++] = h;
 }
 
+void undefined() {
+    printf("Undefined Sym");
+}
+
 void hybris_register_hooks(struct _hook *hooks) {
     struct _hook *ptr = &hooks[0];
     while (ptr->name != NULL)
     {
+        // hybris_hook(ptr->name, (void*)undefined);
         add_user_hook(*ptr, 0);
         ptr++;
     }

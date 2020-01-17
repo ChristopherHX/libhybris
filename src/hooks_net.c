@@ -119,6 +119,26 @@ size_t recvmsg(int sockfd, struct msghdr *msg, int flags) {
 }
 #endif
 
+// template<class=void()> struct Function {
+// 		static constexpr size_t plength = 0;
+// 	};
+// template<class R, class ...P> struct Function<R(P...)> {
+//     using Return = R;
+//     template<size_t I=0> using Parameter = typename std::tuple_element_t<I, std::tuple<P...,void>>;
+//     static constexpr bool hasContext = std::is_same_v<std::remove_reference_t<std::remove_cv_t<Parameter<0>>>, std::shared_ptr<Context>>;
+//     static constexpr size_t poffset = (size_t)hasContext;
+//     static constexpr size_t plength = sizeof...(P) - poffset;
+//     static constexpr bool pobj[sizeof...(P)] = { std::is_same_v<std::remove_reference_t<std::remove_cv_t<P>>,Reference<>>... };
+// };
+
+// template<class Func> struct STDCallWrapper {
+//     auto STDCallWrap
+// };
+// (\{"[^"]+", )([^\}]+)(\},)
+
+void stubnet() {
+
+}
 
 struct _hook net_hooks[] = {
     /* net specifics, to avoid __res_get_state */
@@ -127,33 +147,33 @@ struct _hook net_hooks[] = {
     {"freeaddrinfo", my_freeaddrinfo},
     {"getnameinfo", my_getnameinfo},
 #endif
-    {"gethostbyaddr", gethostbyaddr},
-    {"gethostbyname", gethostbyname},
+    {"gethostbyaddr", stubnet},
+    {"gethostbyname", stubnet},
     // {"gethostbyname2", gethostbyname2},
     // {"gethostent", gethostent},
-    {"gai_strerror", gai_strerror},
+    {"gai_strerror", stubnet},
     /* socket.h */
 #ifndef __APPLE__
-    {"socket", socket},
-    {"bind", bind},
-    {"connect", connect},
-    {"sendto", sendto},
-    {"recvfrom", recvfrom},
-    {"getsockname", getsockname},
-    {"getsockopt", getsockopt},
-    {"setsockopt", setsockopt},
+    {"socket", stubnet},
+    {"bind", stubnet},
+    {"connect", stubnet},
+    {"sendto", stubnet},
+    {"recvfrom", stubnet},
+    {"getsockname", stubnet},
+    {"getsockopt", stubnet},
+    {"setsockopt", stubnet},
 #endif
     // {"socketpair", socketpair},
-    {"getpeername", getpeername},
-    {"send", send},
-    {"recv", recv},
-    {"sendmsg", sendmsg},
+    {"getpeername", stubnet},
+    {"send", stubnet},
+    {"recv", stubnet},
+    {"sendmsg", stubnet},
     // {"sendmmsg", sendmmsg},
-    {"recvmsg", recvmsg},
+    {"recvmsg", stubnet},
     // {"recvmmsg", recvmmsg},
-    {"listen", listen},
-    {"accept", accept},
+    {"listen", stubnet},
+    {"accept", stubnet},
     // {"accept4", accept4},
-    {"shutdown", shutdown},
+    {"shutdown", stubnet},
     {NULL, NULL}
 };

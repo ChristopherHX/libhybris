@@ -989,10 +989,11 @@ load_segments(int fd, void *header, soinfo *si)
                  * (though we can probably accomplish the same thing with
                  * mprotect).
                  */
-                extra_base = mmap((void *)tmp, extra_len,
-                                  PFLAGS_TO_PROT(phdr->p_flags),
-                                  MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS,
-                                  -1, 0);
+                memset((void *)tmp, 0, extra_len);
+                // extra_base = mmap((void *)tmp, extra_len,
+                //                   PFLAGS_TO_PROT(phdr->p_flags),
+                //                   MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS,
+                //                   -1, 0);
                 // if (extra_base == MAP_FAILED) {
                 //     DL_ERR("[ %5d - failed to extend segment from '%s' @ 0x%08x"
                 //            " (0x%08x) ]", pid, si->name, (unsigned)tmp,

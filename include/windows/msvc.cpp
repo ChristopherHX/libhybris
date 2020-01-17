@@ -1083,3 +1083,47 @@ extern "C" char *strsep(char **stringp, const char *delim) {
 		return vret;
 	}
 }
+
+#include <mutex>
+#include <atomic>
+
+void* _pthread_once_done;
+std::mutex _pthread_once_mutex;
+
+BOOL CALLBACK pthread_onceInternal(PINIT_ONCE InitOnce, PVOID Parameter, PVOID *lpContex) {
+    ((void (*)(void))Parameter)();
+    return TRUE;
+}
+// INIT_ONCE once = INIT_ONCE_STATIC_INIT;
+
+// int pthread_once(pthread_once_t  *once_control, void (*init_routine)(void)) {
+//     BOOL ret = InitOnceExecuteOnce(&once/* (PINIT_ONCE) once_control */, pthread_onceInternal, init_routine, NULL);
+// 	return 0;
+// }
+
+extern "C" int pthread_once(void *once_control, void (*init_routine)(void)) {
+    std::atomic<void*>* atm = (std::atomic<void*>*) once_control;
+    std::unique_lock<std::mutex> lock (_pthread_once_mutex);
+    void* ldval = atm->load();
+    if (ldval == (void*) &_pthread_once_done)
+        return 0;
+
+    if (ldval == nullptr) {
+        std::shared_ptr<INIT_ONCE>* once_control_r = new std::shared_ptr<INIT_ONCE>(new INIT_ONCE());
+		InitOnceInitialize(once_control_r->get());
+        // **once_control_r = PTHREAD_ONCE_INIT;
+        atm->store(once_control_r);
+        lock.unlock();
+        // pthread_once((*once_control_r).get(), init_routine);
+		BOOL ret = InitOnceExecuteOnce((*once_control_r).get(), pthread_onceInternal, init_routine, NULL);
+        lock.lock();
+        atm->store((void*) &_pthread_once_done);
+        delete once_control_r; // this will delete the pointer as well after all references are gone
+    } else {
+        std::shared_ptr<INIT_ONCE> once_control_r = *((std::shared_ptr<INIT_ONCE>*) ldval); // deref it so we get a copy of the pointer and hold a ref
+        lock.unlock();
+		BOOL ret = InitOnceExecuteOnce(once_control_r.get(), pthread_onceInternal, init_routine, NULL);
+        // pthread_once(once_control_r.get(), init_routine);
+    }
+    return 0;
+}

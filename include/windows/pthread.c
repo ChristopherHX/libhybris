@@ -100,15 +100,16 @@ int pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 }
 #endif
 
-BOOL CALLBACK pthread_onceInternal(PINIT_ONCE InitOnce, PVOID Parameter, PVOID *lpContex) {
-    ((void (*)(void))Parameter)();
-    return TRUE;
-}
+// BOOL CALLBACK pthread_onceInternal(PINIT_ONCE InitOnce, PVOID Parameter, PVOID *lpContex) {
+//     ((void (*)(void))Parameter)();
+//     return TRUE;
+// }
+// INIT_ONCE once = INIT_ONCE_STATIC_INIT;
 
-int pthread_once(pthread_once_t  *once_control, void (*init_routine)(void)) {
-    InitOnceExecuteOnce((PINIT_ONCE) once_control, pthread_onceInternal, init_routine, NULL);
-	return 0;
-}
+// int pthread_once(pthread_once_t  *once_control, void (*init_routine)(void)) {
+//     BOOL ret = InitOnceExecuteOnce(&once/* (PINIT_ONCE) once_control */, pthread_onceInternal, init_routine, NULL);
+// 	return 0;
+// }
 
 //  
 // Usage: SetThreadName ((DWORD)-1, "MainThread");  

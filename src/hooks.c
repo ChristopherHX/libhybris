@@ -335,6 +335,9 @@ struct _hook main_hooks[] = {
     {"setjmp", bionic_setjmp},
     {"longjmp", bionic_longjmp},
 #else
+#ifdef __arm__
+    {"sigsetjmp", __sigsetjmp},
+#endif
     {"setjmp", _setjmp},
     {"longjmp", longjmp},
 #endif

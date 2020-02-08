@@ -38,6 +38,14 @@
 #define PAGE_SIZE 4096
 #define PAGE_MASK 4095
 
+#if !defined(ANDROID_X86_LINKER) && !defined(ANDROID_ARM_LINKER)
+#ifdef __i386__
+#define ANDROID_X86_LINKER
+#elif defined(__arm__)
+#define ANDROID_ARM_LINKER
+#endif
+#endif
+
 void debugger_init();
 const char *addr_to_name(unsigned addr);
 

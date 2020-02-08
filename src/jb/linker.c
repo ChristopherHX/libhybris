@@ -29,6 +29,11 @@
 #ifndef __APPLE__
 #include <linux/auxvec.h>
 #endif
+#ifdef __arm__
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1362,6 +1367,9 @@ static int reloc_library(soinfo *si, Elf32_Rel *rel, unsigned count)
             sym_name = (char *)(strtab + symtab[sym].st_name);
             INFO("HYBRIS: '%s' checking hooks for sym '%s'\n", si->name, sym_name);
             sym_addr = (unsigned int) get_hooked_symbol(sym_name);
+#ifdef __arm__
+            retry:
+#endif
             if (sym_addr) {
                 INFO("HYBRIS: '%s' hooked symbol %s to %x\n", si->name,
                                                   sym_name, sym_addr);
@@ -1370,6 +1378,11 @@ static int reloc_library(soinfo *si, Elf32_Rel *rel, unsigned count)
             }
             if(!sym_addr) {
             if(s == NULL) {
+#ifdef __arm__
+                if(sym_addr = dlsym(RTLD_DEFAULT, sym_name)) {
+                    goto retry;
+                }
+#endif
                 /* We only allow an undefined symbol if this is a weak
                    reference..   */
                 s = &symtab[sym];

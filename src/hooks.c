@@ -95,7 +95,7 @@ static int locale_inited = 0;
  *  - if p <= ANDROID_TOP_ADDR_VALUE_MUTEX then it is an android mutex, not one we processed
  *  - if p > VMALLOC_END, then the pointer is not a result of malloc ==> it is an shm offset
  */
-
+#ifndef __ANDROID__
 uintptr_t _hybris_stack_chk_guard = 0;
 
 #ifndef __APPLE__
@@ -793,6 +793,7 @@ struct _hook main_hooks[] = {
     {"getrusage", getrusage},
     {NULL, NULL},
 };
+#endif
 static struct _hook* user_hooks = NULL;
 static int user_hooks_size = 0;
 static int user_hooks_arr_size = 0;
@@ -867,7 +868,7 @@ void *get_hooked_symbol(const char *sym)
     }
     return NULL;
 }
-
+#ifndef __ANDROID__
 #include "hooks_list.h"
 
 // This file will be definitely included and therefore it's safe to use __attribute__((constructor)) here.
@@ -876,3 +877,4 @@ static void android_linker_init()
 {
     hybris_register_default_hooks();
 }
+#endif

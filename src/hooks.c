@@ -180,10 +180,31 @@ int darwin_my_getrlimit(int resource, struct android_rlimit *rlim) {
     return ret;
 }
 
+#ifdef OLD_MACOS
+#include <mach/clock.h>
+#include <mach/mach.h>
+#endif
+
 int darwin_my_clock_gettime(clockid_t clk_id, struct timespec *tp) {
+#ifdef OLD_MACOS // OS X does not have clock_gettime, use clock_get_time
+    clock_serv_t cclock;
+    mach_timespec_t mts;
+    if (host_get_clock_service(mach_host_self(), clk_id == 1 ? SYSTEM_CLOCK : CALENDAR_CLOCK, &cclock) != KERN_SUCCESS) {
+        return -1;
+    }
+    kern_return_t r = clock_get_time(cclock, &mts);
+    mach_port_deallocate(mach_task_self(), cclock);
+    if (r != KERN_SUCCESS) {
+        return -1;
+    }
+    ts->tv_sec = mts.tv_sec;
+    ts->tv_nsec = mts.tv_nsec;
+    return 0;
+#else
     if (clk_id == 1)
         clk_id = CLOCK_MONOTONIC;
     return clock_gettime(clk_id, tp);
+#endif
 }
 
 int darwin_my_ioctl(int s, int cmd, void* arg) {
@@ -690,13 +711,17 @@ struct _hook main_hooks[] = {
     {"timelocal", timelocal},
     // {"dysize", dysize},
     {"nanosleep", nanosleep},
+#ifndef OLD_MACOS
     {"clock_getres", clock_getres},
+#endif
 #ifdef __APPLE__
     {"clock_gettime", darwin_my_clock_gettime},
 #else
     {"clock_gettime", clock_gettime},
 #endif
+#ifndef OLD_MACOS
     {"clock_settime", clock_settime},
+#endif
     // {"clock_nanosleep", clock_nanosleep},
     // {"clock_getcpuclockid", clock_getcpuclockid},
     /* mman.h */

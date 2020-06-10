@@ -183,6 +183,9 @@ int darwin_my_getrlimit(int resource, struct android_rlimit *rlim) {
 #ifdef OLD_MACOS
 #include <mach/clock.h>
 #include <mach/mach.h>
+#ifndef CLOCK_MONOTONIC
+typedef int clockid_t;
+#endif
 #endif
 
 int darwin_my_clock_gettime(clockid_t clk_id, struct timespec *tp) {
@@ -197,8 +200,8 @@ int darwin_my_clock_gettime(clockid_t clk_id, struct timespec *tp) {
     if (r != KERN_SUCCESS) {
         return -1;
     }
-    ts->tv_sec = mts.tv_sec;
-    ts->tv_nsec = mts.tv_nsec;
+    tp->tv_sec = mts.tv_sec;
+    tp->tv_nsec = mts.tv_nsec;
     return 0;
 #else
     if (clk_id == 1)

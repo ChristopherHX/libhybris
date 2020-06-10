@@ -447,7 +447,9 @@ struct _hook main_hooks[] = {
     // {"mkstemps", mkstemps},
     // {"mkstemps64", mkstemps64},
     {"mkdtemp", mkdtemp},
+#ifndef OLD_MACOS
     {"mkostemp", mkostemp},
+#endif
     // {"mkostemp64", mkostemp64},
     // {"mkostemps", mkostemps},
     // {"mkostemps64", mkostemps64},
